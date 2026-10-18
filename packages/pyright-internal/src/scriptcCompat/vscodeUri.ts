@@ -483,6 +483,7 @@ function percentDecode(str: string): string {
 
 // --- Utils (ported from lib/umd/utils.js) ---
 
+// scriptc: nodePath.posix.* member calls have no lowering; use nodePath.* directly (POSIX-only build).
 const slash = '/';
 
 // Object literal rather than a namespace: scriptc refuses the class-value
@@ -495,10 +496,12 @@ function resolvePath(uri: URI, ...paths: string[]): URI {
     let path = uri.path;
     let slashAdded = false;
     if (path[0] !== slash) {
-        path = slash + path; // for nodePath.resolve the first segment has to be absolute or cwd is used.
+        path = slash + path; // first segment must be absolute so join+normalize behaves like resolve.
         slashAdded = true;
     }
-    let resolvedPath = nodePath.resolve(path, ...paths);
+    // scriptc: nodePath.resolve has no lowering; `path` is absolute here, so
+    // join + normalize is equivalent (upstream used resolve).
+    let resolvedPath = nodePath.normalize(nodePath.join(path, ...paths));
     if (slashAdded && resolvedPath[0] === slash && !uri.authority) {
         resolvedPath = resolvedPath.substring(1);
     }
