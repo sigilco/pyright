@@ -175,7 +175,7 @@ class DefaultTypeshedInfoProvider implements TypeshedInfoProvider {
                         let minVersionString = versionSplit[0].trim();
                         if (minVersionString.endsWith('+')) {
                             // If the version ends in "+", strip it off.
-                            minVersionString = minVersionString.substr(0, minVersionString.length - 1);
+                            minVersionString = minVersionString.slice(0, minVersionString.length - 1);
                         }
 
                         let minVersion = PythonVersion.fromString(minVersionString);

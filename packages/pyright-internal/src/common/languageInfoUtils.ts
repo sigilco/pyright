@@ -496,7 +496,7 @@ export class TreeDumper extends ParseTreeWalker {
         if (childrenToWalk.length > 0) {
             this._indentation += '  ';
             this.walkMultiple(childrenToWalk);
-            this._indentation = this._indentation.substr(0, this._indentation.length - 2);
+            this._indentation = this._indentation.slice(0, this._indentation.length - 2);
         }
     }
 

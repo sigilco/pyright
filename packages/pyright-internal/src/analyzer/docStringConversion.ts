@@ -201,7 +201,7 @@ class DocStringConverter {
     }
 
     private _currentLineWithinBlock(): string {
-        return this._currentLine().substr(this._blockIndent);
+        return this._currentLine().slice(this._blockIndent);
     }
 
     private _pushAndSetState(next: State): void {

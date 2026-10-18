@@ -316,7 +316,7 @@ function _getTextEditsForAutoImportSymbolAddition(
 
             // Use the same combination of spaces or tabs to match
             // existing formatting.
-            indentText = parseFileResults.text.substr(firstSymbolLineRange.start, firstSymbolPos.character);
+            indentText = parseFileResults.text.slice(firstSymbolLineRange.start, firstSymbolLineRange.start + firstSymbolPos.character);
 
             // Is the indent text composed of whitespace only?
             if (indentTextRegEx.test(indentText)) {

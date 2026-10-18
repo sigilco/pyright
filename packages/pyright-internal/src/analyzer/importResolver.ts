@@ -2628,7 +2628,7 @@ function _getModuleNameInfoFromPath(
     // rather than the real package. We'll strip off the "-stubs" suffix
     // in this case.
     if (parts[0].endsWith(stubsSuffix)) {
-        parts[0] = parts[0].substr(0, parts[0].length - stubsSuffix.length);
+        parts[0] = parts[0].slice(0, parts[0].length - stubsSuffix.length);
     }
 
     // Check whether parts contains invalid characters.

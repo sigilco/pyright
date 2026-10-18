@@ -108,7 +108,7 @@ export function applyTextEditsToString(
     // Apply change in reverse order.
     let current = originalText;
     for (const change of editsWithOffset) {
-        current = current.substr(0, change.range.start) + change.text + current.substr(TextRange.getEnd(change.range));
+        current = current.slice(0, change.range.start) + change.text + current.slice(TextRange.getEnd(change.range));
     }
 
     return current;

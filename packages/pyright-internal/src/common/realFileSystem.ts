@@ -321,7 +321,7 @@ class EggZipOpenFS extends ZipOpenFS {
         let filePath = `` as PortablePath;
 
         while (true) {
-            const archivePart = getArchivePart(p.substr(filePath.length));
+            const archivePart = getArchivePart(p.slice(filePath.length));
             if (!archivePart) return null;
 
             filePath = this.pathUtils.join(filePath, archivePart);
@@ -361,7 +361,7 @@ class EggZipOpenFS extends ZipOpenFS {
 
             return {
                 archivePath: filePath,
-                subPath: this.pathUtils.join(PortablePath.root, p.substr(filePath.length) as PortablePath),
+                subPath: this.pathUtils.join(PortablePath.root, p.slice(filePath.length) as PortablePath),
             };
         }
     }

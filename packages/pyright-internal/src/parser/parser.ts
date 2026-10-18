@@ -3195,7 +3195,7 @@ export class Parser {
             // Swallow invalid tokens to make sure we make forward progress.
             if (this._peekTokenType() === TokenType.Invalid) {
                 const invalidToken = this._getNextToken();
-                const text = this._fileContents!.substr(invalidToken.start, invalidToken.length);
+                const text = this._fileContents!.slice(invalidToken.start, invalidToken.start + invalidToken.length);
 
                 const firstCharCode = text.charCodeAt(0);
 
@@ -5597,7 +5597,7 @@ export class Parser {
         if (nextToken.type === TokenType.Keyword) {
             const keywordToken = nextToken as KeywordToken;
             if (KeywordToken.isSoftKeyword(keywordToken)) {
-                const keywordText = this._fileContents!.substr(nextToken.start, nextToken.length);
+                const keywordText = this._fileContents!.slice(nextToken.start, nextToken.start + nextToken.length);
                 this._getNextToken();
                 return IdentifierToken.create(nextToken.start, nextToken.length, keywordText, nextToken.comments);
             }

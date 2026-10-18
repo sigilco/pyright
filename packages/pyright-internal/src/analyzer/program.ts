@@ -1023,7 +1023,7 @@ export class Program {
                 return undefined;
             }
 
-            return fileContents.substr(textRange.start, textRange.length);
+            return fileContents.slice(textRange.start, textRange.start + textRange.length);
         });
     }
 

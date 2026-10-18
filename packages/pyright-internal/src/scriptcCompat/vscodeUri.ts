@@ -341,7 +341,7 @@ function encodeURIComponentFast(uriComponent: string, isPath: boolean, isAuthori
             }
         } else {
             if (res === undefined) {
-                res = uriComponent.substr(0, pos);
+                res = uriComponent.slice(0, pos);
             }
             const escaped = encodeTable[code];
             if (escaped !== undefined) {
@@ -367,7 +367,7 @@ function encodeURIComponentMinimal(path: string): string {
         const code = path.charCodeAt(pos);
         if (code === 35 /* CharCode.Hash */ || code === 63 /* CharCode.QuestionMark */) {
             if (res === undefined) {
-                res = path.substr(0, pos);
+                res = path.slice(0, pos);
             }
             res += encodeTable[code];
         } else {
@@ -390,9 +390,9 @@ function uriToFsPath(uri: UriComponents, keepDriveLetterCasing: boolean): string
         uri.path.charCodeAt(2) === 58 /* CharCode.Colon */
     ) {
         if (!keepDriveLetterCasing) {
-            value = uri.path[1].toLowerCase() + uri.path.substr(2);
+            value = uri.path[1].toLowerCase() + uri.path.slice(2);
         } else {
-            value = uri.path.substr(1);
+            value = uri.path.slice(1);
         }
     } else {
         value = uri.path;
@@ -415,15 +415,15 @@ function _asFormatted(uri: UriComponents, skipEncoding: boolean): string {
     if (authority) {
         let idx = authority.indexOf('@');
         if (idx !== -1) {
-            const userinfo = authority.substr(0, idx);
-            authority = authority.substr(idx + 1);
+            const userinfo = authority.slice(0, idx);
+            authority = authority.slice(idx + 1);
             idx = userinfo.lastIndexOf(':');
             if (idx === -1) {
                 res += encoder(userinfo, false, false);
             } else {
-                res += encoder(userinfo.substr(0, idx), false, false);
+                res += encoder(userinfo.slice(0, idx), false, false);
                 res += ':';
-                res += encoder(userinfo.substr(idx + 1), false, true);
+                res += encoder(userinfo.slice(idx + 1), false, true);
             }
             res += '@';
         }
@@ -432,8 +432,8 @@ function _asFormatted(uri: UriComponents, skipEncoding: boolean): string {
         if (idx === -1) {
             res += encoder(authority, false, true);
         } else {
-            res += encoder(authority.substr(0, idx), false, true);
-            res += authority.substr(idx);
+            res += encoder(authority.slice(0, idx), false, true);
+            res += authority.slice(idx);
         }
     }
     if (path) {
@@ -441,12 +441,12 @@ function _asFormatted(uri: UriComponents, skipEncoding: boolean): string {
         if (path.length >= 3 && path.charCodeAt(0) === 47 /* CharCode.Slash */ && path.charCodeAt(2) === 58 /* CharCode.Colon */) {
             const code = path.charCodeAt(1);
             if (code >= 65 /* CharCode.A */ && code <= 90 /* CharCode.Z */) {
-                path = `/${String.fromCharCode(code + 32)}:${path.substr(3)}`;
+                path = `/${String.fromCharCode(code + 32)}:${path.slice(3)}`;
             }
         } else if (path.length >= 2 && path.charCodeAt(1) === 58 /* CharCode.Colon */) {
             const code = path.charCodeAt(0);
             if (code >= 65 /* CharCode.A */ && code <= 90 /* CharCode.Z */) {
-                path = `${String.fromCharCode(code + 32)}:${path.substr(2)}`;
+                path = `${String.fromCharCode(code + 32)}:${path.slice(2)}`;
             }
         }
         res += encoder(path, true, false);
@@ -467,7 +467,7 @@ function decodeURIComponentGraceful(str: string): string {
         return decodeURIComponent(str);
     } catch {
         if (str.length > 3) {
-            return str.substr(0, 3) + decodeURIComponentGraceful(str.substr(3));
+            return str.slice(0, 3) + decodeURIComponentGraceful(str.slice(3));
         }
         return str;
     }

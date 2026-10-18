@@ -35,6 +35,9 @@ Changes made on `work/scriptc-native` that diverge from upstream pyright, why th
 | `packages/pyright-internal/src/analyzer/cacheManager.ts` | `CacheManager.is` moved from merged namespace function to static class method. | Merged namespace member call is a dyn boundary that stripped the class value. | Equivalent API; upstreamable. |
 | `packages/pyright-internal/src/analyzer/typeUtils.ts` | `AnyOrUnknownWalker` hoisted to module top level. | Local class inside a function fences under the closure-env class rule. | Pure hoist; upstreamable. |
 | `packages/pyright-internal/src/analyzer/program.ts` | `Program._nextId++` → `Program._nextId = Program._nextId + 1`. | Compound/static-postfix increment on a class member has no lowering. | Trivial; upstreamable. |
+| `.substr(` sweep (~48 sites across `pyright-internal/src`) | `x.substr(a, b)` → `x.slice(a, a + b)` / equivalent. | `String.prototype.substr` has no scriptc lowering. | Semantics identical; merge-safe (substr is deprecated anyway). |
+| `packages/pyright-internal/src/common/filePath.ts` | New file: `FilePath` branded string (`string & FilePathBrand`) + `toFilePath()`; `Uri.getFilePath(): FilePath` types the fs seam so tsc enumerates every site feeding unverified strings into fs calls. | Compile-time-only brand to make Uri→string leaks enumerable (erased in the emitted bundle, zero runtime cost). | Compile-time only; upstream could adopt or drop freely. |
+| `packages/pyright-internal/src/pyright.ts` | `includeSpec.wildcardRoot.toString()` → `.toUserVisibleString()` in the missing-path error message. | `x.toString()` on a dyn receiver lowers to `dyn.toString`, which only finds *own* members — Uri's prototype `toString` is invisible, yielding `[object Object]`. | Prints `/path` instead of `file:///path`; merge-safe. |
 
 ## tooling
 
