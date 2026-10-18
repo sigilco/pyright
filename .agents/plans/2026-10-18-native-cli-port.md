@@ -46,6 +46,6 @@ Goal: distributable pyright **typecheck CLI** for embedding in pyscriptc — no 
 
 pyscriptc needs `TypeFacts` (serializable type info per symbol); today the CLI only emits diagnostics (mypy-parity, zero facts). Options:
 - **`--facts` verb in this fork (recommended)**: `TypeEvaluator` already computes types — serialize to our JSON contract directly. Cleanest, no LSP hop; pairs with the Phase-2 daemon surface (`facts-file`, `facts-delta` ops over the persistent `Program`).
-- LSP hover: untested under bun-compile; second choice.
+- LSP hover: VERIFIED under bun-compile (2026-10-18) — esbuild flat bundle of src/langserver.ts (format=cjs, --main-fields=module,main for jsonc-parser ESM) + `bun build --compile`; initialize/didOpen/hover/documentSymbol over stdio all work, hover returns `(function) def greet(name: str) -> str`, identical null-vs-result parity vs `node dist/pyright-langserver.js`. Caveats: needs sibling typeshed-fallback + __rootDirectory banner; worker-thread backgroundAnalysis (`new Worker(__filename)`) not yet exercised. Second choice to --facts but functional today.
 
 Decision recorded from pyscriptc agent input; do not implement in the scriptc-native branch — belongs to the Phase-2 daemon work.
