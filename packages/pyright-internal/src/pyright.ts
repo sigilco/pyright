@@ -19,6 +19,7 @@ import { parseArgs } from 'node:util';
 
 import { ChildProcess, fork } from 'child_process';
 import { AnalysisResults } from './analyzer/analysis';
+import { FACTS_SCHEMA, FACTS_SCHEMA_VERSION, FactsFileReport, generateFactsForFile } from './analyzer/factsReport';
 import { PackageTypeReport, TypeKnownStatus } from './analyzer/packageTypeReport';
 import { PackageTypeVerifier } from './analyzer/packageTypeVerifier';
 import { AnalyzerService } from './analyzer/service';
@@ -176,6 +177,7 @@ async function processArgs(): Promise<ExitStatus> {
     const optionDefinitions = {
         createstub: { type: 'string' },
         dependencies: { type: 'boolean' },
+        facts: { type: 'boolean' },
         files: { type: 'string', multiple: true },
         help: { type: 'boolean', short: 'h' },
         ignoreexternal: { type: 'boolean' },
@@ -263,6 +265,16 @@ async function processArgs(): Promise<ExitStatus> {
         for (const arg of incompatibleArgs) {
             if (args[arg] !== undefined) {
                 console.error(`'verifytypes' option cannot be used with '${arg}' option`);
+                return ExitStatus.ParameterError;
+            }
+        }
+    }
+
+    if (args.facts !== undefined) {
+        const incompatibleArgs = ['watch', 'stats', 'verbose', 'createstub', 'dependencies', 'verifytypes', 'threads'];
+        for (const arg of incompatibleArgs) {
+            if (args[arg] !== undefined) {
+                console.error(`'facts' option cannot be used with '${arg}' option`);
                 return ExitStatus.ParameterError;
             }
         }
@@ -433,7 +445,7 @@ async function processArgs(): Promise<ExitStatus> {
 
     // If using outputjson, redirect all console output to stderr so it doesn't mess
     // up the JSON output, which goes to stdout.
-    const output = args.outputjson ? new StderrConsole(logLevel) : new StandardConsole(logLevel);
+    const output = args.outputjson || args.facts ? new StderrConsole(logLevel) : new StandardConsole(logLevel);
     const fileSystem = new PyrightFileSystem(
         createFromRealFileSystem(tempFile, output, new ChokidarFileWatcherProvider(output))
     );
@@ -526,7 +538,20 @@ async function runSingleThreaded(
                 a.fileUri.toString() < b.fileUri.toString() ? -1 : 1
             );
 
-            if (args.outputjson) {
+            if (args.facts) {
+                const report = reportFactsAsJson(
+                    fileDiagnostics,
+                    minSeverityLevel,
+                    results.filesInProgram,
+                    results.elapsedTime,
+                    service,
+                    args.files ?? []
+                );
+                errorCount += report.errorCount;
+                if (treatWarningsAsErrors) {
+                    errorCount += report.warningCount;
+                }
+            } else if (args.outputjson) {
                 const report = reportDiagnosticsAsJson(
                     fileDiagnostics,
                     minSeverityLevel,
@@ -1209,6 +1234,7 @@ function printUsage() {
             '  Options:\n' +
             '  --createstub <IMPORT>              Create type stub file(s) for import\n' +
             '  --dependencies                     Emit import dependency information\n' +
+            '  --facts                            Emit structured type facts (schema pyright-facts) as JSON\n' +
             '  -h,--help                          Show this help message\n' +
             '  --ignoreexternal                   Ignore external imports for --verifytypes\n' +
             '  --level <LEVEL>                    Minimum diagnostic level (error or warning)\n' +
@@ -1239,6 +1265,75 @@ function getVersionString() {
 
 function printVersion(console: ConsoleInterface) {
     console.info(`${toolName} ${getVersionString()}`);
+}
+
+function reportFactsAsJson(
+    fileDiagnostics: FileDiagnostics[],
+    minSeverityLevel: SeverityLevel,
+    filesInProgram: number,
+    timeInSec: number,
+    service: AnalyzerService,
+    files: string[]
+): DiagnosticResult {
+    const report: PyrightJsonResults & {
+        schema: string;
+        schemaVersion: number;
+        facts: { [file: string]: FactsFileReport };
+    } = {
+        schema: FACTS_SCHEMA,
+        schemaVersion: FACTS_SCHEMA_VERSION,
+        version: getVersionString(),
+        time: Date.now().toString(),
+        generalDiagnostics: [],
+        facts: {},
+        summary: {
+            filesAnalyzed: filesInProgram,
+            errorCount: 0,
+            warningCount: 0,
+            informationCount: 0,
+            timeInSec,
+        },
+    };
+
+    fileDiagnostics.forEach((fileDiag) => {
+        fileDiag.diagnostics.sort(compareDiagnostics).forEach((diag) => {
+            if (
+                diag.category === DiagnosticCategory.Error ||
+                diag.category === DiagnosticCategory.Warning ||
+                diag.category === DiagnosticCategory.Information
+            ) {
+                const jsonDiag = convertDiagnosticToJson(fileDiag.fileUri.getFilePath(), diag);
+                if (isDiagnosticIncluded(jsonDiag.severity, minSeverityLevel)) {
+                    report.generalDiagnostics.push(jsonDiag);
+                }
+
+                accumulateReportDiagnosticStats(jsonDiag, report);
+            }
+        });
+    });
+
+    const program = service.backgroundAnalysisProgram.program;
+    const requestedFiles = new Set(files.map((f) => normalizePath(combinePaths(process.cwd(), f))));
+    program.getSourceFileInfoList().forEach((sourceFileInfo) => {
+        const filePath = sourceFileInfo.uri.getFilePath();
+        if (!sourceFileInfo.isTracked || !requestedFiles.has(normalizePath(filePath))) {
+            return;
+        }
+        const facts = generateFactsForFile(program, sourceFileInfo.uri);
+        if (facts) {
+            report.facts[facts.file] = facts;
+        }
+    });
+
+    console.info(JSON.stringify(report, /* replacer */ undefined, 4));
+    console.info('');
+
+    return {
+        errorCount: report.summary.errorCount,
+        warningCount: report.summary.warningCount,
+        informationCount: report.summary.informationCount,
+        diagnosticCount: report.summary.errorCount + report.summary.warningCount + report.summary.informationCount,
+    };
 }
 
 function reportDiagnosticsAsJson(
