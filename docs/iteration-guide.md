@@ -2,6 +2,17 @@
 
 How to reproduce, triage, and verify scriptc fences on the pyright bundle without paying for full builds.
 
+## Toolchain rule (2026-10-18): upstream npm scriptc only
+
+Use the published `scriptc` (npm `scriptc@latest`, verified 0.3.6) — NOT the `~/repos/scriptc` workspace checkout and NOT `node ~/repos/scriptc/packages/cli/dist/main.js`.
+
+- `scriptc coverage dist-cli-dev/pyright-native.js` on the current bundle: **0 hard refusals** — `@ts-nocheck` (prepended by `make-native-bundle.mjs`) absorbs all SC0001 strictness codes (186 on raw npm 0.3.6 → 0). The `work/pyright-probe` relaxed-codes branch is no longer needed for the bundle path. Flagged gap: it remains required if we ever compile un-nocheck'd TS directly.
+- 100 fences remain but are all **deferred-runtime** (SC1090/SC1101/SC2020 etc. — throw only if the site executes); many are on dead paths for the typecheck CLI (`child_process`, runtime-path `fork`, `process.mainModule`, `crypto.getRandomValues`).
+- Upstream-only also kills the workspace↔published runtime-pack skew (`scr_dyn_promise_key_get` etc. undefined at link) — compiler and pack always come from the same release.
+- If a genuinely missing feature is needed (e.g. a real `--jobs` knob, a partition threshold flag), flag it — do not silently build a fork branch.
+
+Build command: `scriptc build dist-cli-dev/pyright-native.js -o /tmp/pyright-native` (same `-o` every time — see cache rules below).
+
 ## Measured rebuild curve (scriptc 0.3.6)
 
 Synthetic program: 63MB IR, ~2500 functions, 16 partitions, npm-distributed `scriptc` 0.3.6:
@@ -15,11 +26,12 @@ Synthetic program: 63MB IR, ~2500 functions, 16 partitions, npm-distributed `scr
 
 Facts that shape the workflow:
 
-- Emit is **already parallel** in 0.3.6. The earlier "~50min serial emit" figure is obsolete; the frontend (tsc→IR, ~2min for 63MB IR) is now the floor for a full build.
+- Emit parallelism in 0.3.6 is **input-dependent**: partitions only exist when the `.ll` exceeds ~4 MiB, and even then observed emit on the pyright bundle ran ~1.2 cores (two sessions, `SCRIPTC_JOBS=8` included — the env var is absent on published helpers and `--jobs` is a cap, not a switch, per upstream review). On a synthetic 18.7MB `.ll`, emit did parallelize (307% CPU / 8 partitions). Treat full-bundle emit as ~40–50min serial until proven otherwise on your input; the frontend (tsc→IR→`.ll`) is itself the serial bulk.
+- The **warm partition cache is the real lever**: byte-identical input → ~4min end-to-end; any source change re-hashes the whole bundle → cold ~44min. Keep input bytes stable between builds; iterate via probes instead.
 - Partition assignment is `stableHash(symbol) % count` — position-stable, so a one-line edit dirties only its partition plus partitions importing the edited symbol. Iteration cost is roughly `frontend + 1/partitions` when the same `-o` is reused.
 - **Never change `-o`** between iterations: `outPath` is an executable-cache key input. Reuse one output path and diff binaries if needed.
 - Partition cache lives at `~/.cache/scriptc/build/native-v1/partitions/<sha256(helper+target)[:32]>/`.
-- The pyright bundle still refuses at preflight: npm 0.3.6 → 186 SC0001 (19s); repo probe-branch → 56 SC0001 (~5s). Builds never reach emit until those clear — probe-first is the only live loop for fence work.
+- Preflight status (2026-10-18, `@ts-nocheck` bundle): npm 0.3.6 → **0 hard refusals, 100 deferred-runtime sites** — the bundle BUILDS; remaining work is runtime fences on executed paths. Probe-first is still the live loop for fence fixes (a bundle edit = ~44min cold build).
 
 ## Probe-first workflow
 
@@ -31,7 +43,7 @@ node scripts/probe.mjs --all                       # all probes, --emit obj
 node scripts/probe.mjs scripts/probes/uri-template.js --run   # compile + run, diff vs Node
 ```
 
-- Default mode: `node ~/repos/scriptc/packages/cli/dist/main.js build <probe> --emit obj -o /tmp/...` — PASS if it compiles, FAIL with the SC code printed if refused. Obj emit skips linking, so it works even while the workspace compiler/runtime packs are version-skewed.
+- Default mode: `scriptc build <probe> --emit obj -o /tmp/...` — PASS if it compiles, FAIL with the SC code printed if refused. `--emit obj` skips linking and lands in ~1.5s.
 - `--run` links and executes via `SCRIPTC` env (default `scriptc`; point it at the npm-distributed binary, e.g. `SCRIPTC=/tmp/sc036/node_modules/.bin/scriptc`) and byte-compares stdout+exit vs `node`.
 - Mark expected divergence with a `// probe-expect: diverge` pragma → reports XFAIL/XPASS instead of FAIL.
 - Current probes (`scripts/probes/`): `uri-template` (Uri→template-literal dyn-leak), `class-capture` (local class, closure capture, statics, computed getter), `map-union` (Map.get union narrowing), `fs-seam` (statSync on `uri.getFilePath()`), `stdlib-surface` (mkdir/writeFile/readdir/path/tmpdir).
@@ -63,4 +75,4 @@ PYLANCE_JEST_TRANSPILE_ONLY=1 node --max-old-space-size=8192 --expose-gc \
 ## Flagged as not-worth-it (days-scale)
 
 - Shrinking the bundle meaningfully (tree-shaking the analyzer) — the 5MB is checker code, not CLI fat.
-- Runtime-pack/compile skew between the workspace compiler and published 0.3.6 (undefined `scr_dyn_promise_key_get`, `scr_dyn_error_string` at link) — a scriptc-side versioning fix, not ours.
+- Runtime-pack/compile skew between a workspace compiler and published packs (undefined `scr_dyn_promise_key_get`, `scr_dyn_error_string` at link) — moot under the upstream-only rule above.
