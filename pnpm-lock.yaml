@@ -14,7 +14,8 @@ overrides:
   ip-address: 10.4.0
 
 patchedDependencies:
-  '@yarnpkg/fslib@2.10.4': f205028ef5359a4700cb639dcb8f6fdacbccf561b48bb763f03ab1d68b99c8b5
+  '@yarnpkg/fslib@2.10.4': 7c655363374096c58e9a1b1148d8af835262da27b4859bf1737c4283cf5c9434
+  '@yarnpkg/libzip@2.3.0': ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0
   smol-toml@1.8.0: 67fd572c60f3a608dc172cc6cb6cb5d8dca1267632e03001743b8ee8e13d1fd9
   vscode-jsonrpc@9.0.1: 7d39f370d8dff70d0cc45bdcd3abb28f3b41db78f387981f3a2f643f3a0ddc05
 
@@ -136,10 +137,10 @@ importers:
     dependencies:
       '@yarnpkg/fslib':
         specifier: 2.10.4
-        version: 2.10.4(patch_hash=f205028ef5359a4700cb639dcb8f6fdacbccf561b48bb763f03ab1d68b99c8b5)
+        version: 2.10.4(patch_hash=7c655363374096c58e9a1b1148d8af835262da27b4859bf1737c4283cf5c9434)
       '@yarnpkg/libzip':
         specifier: 2.3.0
-        version: 2.3.0
+        version: 2.3.0(patch_hash=ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0)
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
@@ -6979,12 +6980,12 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
-  '@yarnpkg/fslib@2.10.4(patch_hash=f205028ef5359a4700cb639dcb8f6fdacbccf561b48bb763f03ab1d68b99c8b5)':
+  '@yarnpkg/fslib@2.10.4(patch_hash=7c655363374096c58e9a1b1148d8af835262da27b4859bf1737c4283cf5c9434)':
     dependencies:
-      '@yarnpkg/libzip': 2.3.0
+      '@yarnpkg/libzip': 2.3.0(patch_hash=ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0)
       tslib: 1.14.1
 
-  '@yarnpkg/libzip@2.3.0':
+  '@yarnpkg/libzip@2.3.0(patch_hash=ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0)':
     dependencies:
       '@types/emscripten': 1.41.5
       tslib: 1.14.1

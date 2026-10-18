@@ -1,5 +1,5 @@
 diff --git a/lib/patchFs/FileHandle.js b/lib/patchFs/FileHandle.js
-index 7690f304c823808095e3092cbee6ab27e0081533..b6f793b87d9eedc938374cc4c8d9dda41e62440c 100644
+index 7690f304c823808095e3092cbee6ab27e0081533..d53a2d884f0bf23cb9b24dec75fec5fc00934661 100644
 --- a/lib/patchFs/FileHandle.js
 +++ b/lib/patchFs/FileHandle.js
 @@ -3,14 +3,14 @@ var _a, _b, _c, _d;
@@ -25,3 +25,114 @@ index 7690f304c823808095e3092cbee6ab27e0081533..b6f793b87d9eedc938374cc4c8d9dda4
  class FileHandle {
      constructor(fd, baseFs) {
          this[_a] = 1;
+@@ -60,10 +60,12 @@ class FileHandle {
+     }
+     // FIXME: Missing FakeFS version
+     datasync() {
++        void this;
+         throw new Error(`Method not implemented.`);
+     }
+     // FIXME: Missing FakeFS version
+     sync() {
++        void this;
+         throw new Error(`Method not implemented.`);
+     }
+     async read(bufferOrOptions, offset, length, position) {
+@@ -136,6 +138,7 @@ class FileHandle {
+     }
+     // FIXME: Missing FakeFS version
+     utimes(atime, mtime) {
++        void this;
+         throw new Error(`Method not implemented.`);
+     }
+     async writeFile(data, options) {
+@@ -197,6 +200,7 @@ class FileHandle {
+     }
+     // FIXME: Missing FakeFS version
+     readv(buffers, position) {
++        void this;
+         throw new Error(`Method not implemented.`);
+     }
+     close() {
+diff --git a/lib/statUtils.js b/lib/statUtils.js
+index bf6e35315a102bc9b8b8b73fefcfe51048ba2cce..337a8f1339406f2b5ae432949485dd3e24b9112d 100644
+--- a/lib/statUtils.js
++++ b/lib/statUtils.js
+@@ -11,21 +11,25 @@ class DirEntry {
+         this.mode = 0;
+     }
+     isBlockDevice() {
++        void this;
+         return false;
+     }
+     isCharacterDevice() {
++        void this;
+         return false;
+     }
+     isDirectory() {
+         return (this.mode & constants_1.S_IFMT) === constants_1.S_IFDIR;
+     }
+     isFIFO() {
++        void this;
+         return false;
+     }
+     isFile() {
+         return (this.mode & constants_1.S_IFMT) === constants_1.S_IFREG;
+     }
+     isSocket() {
++        void this;
+         return false;
+     }
+     isSymbolicLink() {
+@@ -55,21 +59,25 @@ class StatEntry {
+         this.blocks = 1;
+     }
+     isBlockDevice() {
++        void this;
+         return false;
+     }
+     isCharacterDevice() {
++        void this;
+         return false;
+     }
+     isDirectory() {
+         return (this.mode & constants_1.S_IFMT) === constants_1.S_IFDIR;
+     }
+     isFIFO() {
++        void this;
+         return false;
+     }
+     isFile() {
+         return (this.mode & constants_1.S_IFMT) === constants_1.S_IFREG;
+     }
+     isSocket() {
++        void this;
+         return false;
+     }
+     isSymbolicLink() {
+@@ -103,21 +111,25 @@ class BigIntStatsEntry {
+         this.blocks = BigInt(1);
+     }
+     isBlockDevice() {
++        void this;
+         return false;
+     }
+     isCharacterDevice() {
++        void this;
+         return false;
+     }
+     isDirectory() {
+         return (this.mode & BigInt(constants_1.S_IFMT)) === BigInt(constants_1.S_IFDIR);
+     }
+     isFIFO() {
++        void this;
+         return false;
+     }
+     isFile() {
+         return (this.mode & BigInt(constants_1.S_IFMT)) === BigInt(constants_1.S_IFREG);
+     }
+     isSocket() {
++        void this;
+         return false;
+     }
+     isSymbolicLink() {

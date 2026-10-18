@@ -1,0 +1,24 @@
+diff --git a/lib/libzipSync.js b/lib/libzipSync.js
+index 19bff791313b566f960f32dab07a62ac3b925299..0c2da5ce4d9ff22e250ced927b4291c736f04a00 100644
+--- a/lib/libzipSync.js
++++ b/lib/libzipSync.js
+@@ -3335,10 +3335,15 @@ var createModule = (function() {
+         var keys = Object.keys(node.stream_ops);
+         keys.forEach(function(key) {
+           var fn = node.stream_ops[key];
+-          stream_ops[key] = function forceLoadLazyFile() {
+-            FS.forceLoadFile(node);
+-            return fn.apply(null, arguments);
+-          };
++          Object.defineProperty(stream_ops, key, {
++            value: function forceLoadLazyFile() {
++              FS.forceLoadFile(node);
++              return fn.apply(null, arguments);
++            },
++            writable: true,
++            enumerable: true,
++            configurable: true
++          });
+         });
+         stream_ops.read = function stream_ops_read(
+           stream,
