@@ -3,7 +3,10 @@ const { createRequire } = require('module');
 const { monorepoResourceNameMapper, tsconfigResolveAliases } = require('../../build/lib/webpack');
 
 const rspack = createRequire(__filename)('@rspack/core');
-const outPath = path.resolve(__dirname, 'dist-cli');
+// Development builds go to a sibling dir so they can't clobber or be mistaken
+// for the production bundle; they also skip minification, which keeps the
+// emitted JS closer to the authored source (needed by the scriptc probe).
+const devOutPath = path.resolve(__dirname, 'dist-cli-dev');
 const typeshedFallback = path.resolve(__dirname, '..', 'pyright-internal', 'typeshed-fallback');
 
 // Single-file CLI-only variant of rspack.config.js: emits just the typecheck
@@ -12,6 +15,7 @@ const typeshedFallback = path.resolve(__dirname, '..', 'pyright-internal', 'type
 // the native-binary POC (bun --compile). The default build is untouched.
 /** @type {(env: any, argv: { mode: 'production' | 'development' | 'none' }) => any} */
 module.exports = (_, { mode }) => {
+    const outPath = mode === 'development' ? devOutPath : path.resolve(__dirname, 'dist-cli');
     return {
         context: __dirname,
         entry: {
@@ -62,6 +66,10 @@ module.exports = (_, { mode }) => {
         plugins: [new rspack.CopyRspackPlugin({ patterns: [{ from: typeshedFallback, to: 'typeshed-fallback' }] })],
         optimization: {
             splitChunks: false,
+            // Dev mode: hoist ESM modules into the entry scope. Keeping module
+            // contents at top level matters for the scriptc native probe —
+            // classes inside webpack module closures hit an engine fence.
+            concatenateModules: mode === 'development',
         },
     };
 };

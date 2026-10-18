@@ -1,0 +1,27 @@
+diff --git a/lib/patchFs/FileHandle.js b/lib/patchFs/FileHandle.js
+index 7690f304c823808095e3092cbee6ab27e0081533..b6f793b87d9eedc938374cc4c8d9dda41e62440c 100644
+--- a/lib/patchFs/FileHandle.js
++++ b/lib/patchFs/FileHandle.js
+@@ -3,14 +3,14 @@ var _a, _b, _c, _d;
+ Object.defineProperty(exports, "__esModule", { value: true });
+ exports.FileHandle = void 0;
+ const readline_1 = require("readline");
+-const kBaseFs = Symbol(`kBaseFs`);
+-const kFd = Symbol(`kFd`);
+-const kClosePromise = Symbol(`kClosePromise`);
+-const kCloseResolve = Symbol(`kCloseResolve`);
+-const kCloseReject = Symbol(`kCloseReject`);
+-const kRefs = Symbol(`kRefs`);
+-const kRef = Symbol(`kRef`);
+-const kUnref = Symbol(`kUnref`);
++const kBaseFs = `kBaseFs`;
++const kFd = `kFd`;
++const kClosePromise = `kClosePromise`;
++const kCloseResolve = `kCloseResolve`;
++const kCloseReject = `kCloseReject`;
++const kRefs = `kRefs`;
++const kRef = `kRef`;
++const kUnref = `kUnref`;
+ class FileHandle {
+     constructor(fd, baseFs) {
+         this[_a] = 1;

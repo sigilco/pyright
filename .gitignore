@@ -88,6 +88,7 @@ dist
 
 # Single-file CLI bundle output (native-binary POC)
 dist-cli/
+dist-cli-dev/
 
 # Gatsby files
 .cache/

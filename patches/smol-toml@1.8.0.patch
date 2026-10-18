@@ -1,0 +1,155 @@
+diff --git a/dist/date.js b/dist/date.js
+index 40da0f12ed77c89771aca34d292ae31b084a4b9b..13734011fc499806080b70378cdd9f6ac2902e2e 100644
+--- a/dist/date.js
++++ b/dist/date.js
+@@ -26,10 +26,11 @@
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ let DATE_TIME_RE = /^(\d{4}-\d{2}-\d{2})?[T ]?(?:(\d{2}):\d{2}(?::\d{2}(?:\.\d+)?)?)?(Z|[-+]\d{2}:\d{2})?$/i;
+-export class TomlDate extends Date {
+-    #hasDate = false;
+-    #hasTime = false;
+-    #offset = null;
++export class TomlDate {
++    _date = new Date(NaN);
++    _hasDate = false;
++    _hasTime = false;
++    _offset = null;
+     constructor(date) {
+         let hasDate = true;
+         let hasTime = true;
+@@ -59,30 +60,72 @@ export class TomlDate extends Date {
+                 date = '';
+             }
+         }
+-        super(date);
+-        if (!isNaN(this.getTime())) {
+-            this.#hasDate = hasDate;
+-            this.#hasTime = hasTime;
+-            this.#offset = offset;
++        this._date = new Date(date);
++        if (!isNaN(this._date.getTime())) {
++            this._hasDate = hasDate;
++            this._hasTime = hasTime;
++            this._offset = offset;
+         }
+     }
++    getTime() {
++        return this._date.getTime();
++    }
++    valueOf() {
++        return this._date.valueOf();
++    }
++    getTimezoneOffset() {
++        return this._date.getTimezoneOffset();
++    }
++    getUTCFullYear() {
++        return this._date.getUTCFullYear();
++    }
++    getUTCMonth() {
++        return this._date.getUTCMonth();
++    }
++    getUTCDate() {
++        return this._date.getUTCDate();
++    }
++    getUTCHours() {
++        return this._date.getUTCHours();
++    }
++    getUTCMinutes() {
++        return this._date.getUTCMinutes();
++    }
++    getUTCSeconds() {
++        return this._date.getUTCSeconds();
++    }
++    getUTCMilliseconds() {
++        return this._date.getUTCMilliseconds();
++    }
++    toString() {
++        return this._date.toString();
++    }
++    toDateString() {
++        return this._date.toDateString();
++    }
++    toTimeString() {
++        return this._date.toTimeString();
++    }
++    toLocaleString() {
++        return this._date.toLocaleString();
++    }
+     isDateTime() {
+-        return this.#hasDate && this.#hasTime;
++        return this._hasDate && this._hasTime;
+     }
+     isLocal() {
+-        return !this.#hasDate || !this.#hasTime || !this.#offset;
++        return !this._hasDate || !this._hasTime || !this._offset;
+     }
+     isDate() {
+-        return this.#hasDate && !this.#hasTime;
++        return this._hasDate && !this._hasTime;
+     }
+     isTime() {
+-        return this.#hasTime && !this.#hasDate;
++        return this._hasTime && !this._hasDate;
+     }
+     isValid() {
+-        return this.#hasDate || this.#hasTime;
++        return this._hasDate || this._hasTime;
+     }
+     toISOString() {
+-        let iso = super.toISOString();
++        let iso = this._date.toISOString();
+         // Local Date
+         if (this.isDate())
+             return iso.slice(0, 10);
+@@ -90,38 +133,38 @@ export class TomlDate extends Date {
+         if (this.isTime())
+             return iso.slice(11, 23);
+         // Local DateTime
+-        if (this.#offset === null)
++        if (this._offset === null)
+             return iso.slice(0, -1);
+         // Offset DateTime
+-        if (this.#offset === 'Z')
++        if (this._offset === 'Z')
+             return iso;
+         // This part is quite annoying: JS strips the original timezone from the ISO string representation
+         // Instead of using a "modified" date and "Z", we restore the representation "as authored"
+-        let offset = (+(this.#offset.slice(1, 3)) * 60) + +(this.#offset.slice(4, 6));
+-        offset = this.#offset[0] === '-' ? offset : -offset;
+-        let offsetDate = new Date(this.getTime() - (offset * 60e3));
+-        return offsetDate.toISOString().slice(0, -1) + this.#offset;
++        let offset = (+(this._offset.slice(1, 3)) * 60) + +(this._offset.slice(4, 6));
++        offset = this._offset[0] === '-' ? offset : -offset;
++        let offsetDate = new Date(this._date.getTime() - (offset * 60e3));
++        return offsetDate.toISOString().slice(0, -1) + this._offset;
+     }
+     static wrapAsOffsetDateTime(jsDate, offset = 'Z') {
+         let date = new TomlDate(jsDate);
+-        date.#offset = offset;
++        date._offset = offset;
+         return date;
+     }
+     static wrapAsLocalDateTime(jsDate) {
+         let date = new TomlDate(jsDate);
+-        date.#offset = null;
++        date._offset = null;
+         return date;
+     }
+     static wrapAsLocalDate(jsDate) {
+         let date = new TomlDate(jsDate);
+-        date.#hasTime = false;
+-        date.#offset = null;
++        date._hasTime = false;
++        date._offset = null;
+         return date;
+     }
+     static wrapAsLocalTime(jsDate) {
+         let date = new TomlDate(jsDate);
+-        date.#hasDate = false;
+-        date.#offset = null;
++        date._hasDate = false;
++        date._offset = null;
+         return date;
+     }
+ }

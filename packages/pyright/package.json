@@ -21,7 +21,9 @@
         "clean": "shx rm -rf ./dist ./out README.md LICENSE.txt",
         "prepack": "pnpm run clean && shx cp ../../README.md . && shx cp ../../LICENSE.txt . && pnpm run build",
         "webpack": "rspack build -c rspack.config.js --mode development",
-        "webpack:cli": "rspack build -c rspack.cli.config.js --mode production"
+        "webpack:cli": "rspack build -c rspack.cli.config.js --mode production",
+        "webpack:cli:dev": "rspack build -c rspack.cli.config.js --mode development",
+        "bundle:cli:flat": "esbuild src/pyright.ts --bundle --platform=node --format=esm --target=node20 --external:fsevents --outfile=dist-cli-dev/pyright-flat.js --tsconfig=tsconfig.json"
     },
     "optionalDependencies": {
         "fsevents": "~2.3.3"
@@ -31,6 +33,7 @@
         "@rspack/core": "^2.2.2",
         "@types/node": "^25.9.2",
         "copy-webpack-plugin": "^14.0.0",
+        "esbuild": "0.28.1",
         "esbuild-loader": "^4.5.0",
         "shx": "^0.4.0",
         "ts-loader": "^9.5.4",
