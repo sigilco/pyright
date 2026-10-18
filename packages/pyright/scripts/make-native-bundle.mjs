@@ -108,5 +108,8 @@ code = code.replace(
 }
 
 code = shim + code.replace(/__require\(/g, '__builtinRequire(');
-writeFileSync(out, code);
+// scriptc 0.3.6: a checked .js file keeps strict-null/assignability
+// codes (2322 & family) — JSDoc/inferred types on a bundled file are
+// noise, so opt the whole file out.
+writeFileSync(out, '// @ts-nocheck\n' + code);
 console.log(`wrote ${out} (${builtins.length} builtins mapped: ${builtins.join(', ')})`);
