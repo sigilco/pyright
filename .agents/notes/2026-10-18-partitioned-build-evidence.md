@@ -76,3 +76,32 @@ So partitioned emit on this box was NOT faster end-to-end: ~50min+ vs ~37–47mi
 
 ### Hypothesis delta vs section 6
 Agree on per-partition fixed cost, but the dominant factor here looks different: emit ran effectively single-threaded at ~1.2 cores despite the thread pool — likely the partition codegen is serial in this build or I/O/memory-bound. Before capping partition count, verify the emit pool actually parallelizes the 68–256 partitions (watch CPU% on an 8-core box; ~120% = serial). If it is serial, per-partition overhead ×68+ fully explains the regression; if parallel, memory pressure (20GB RSS on a 31GB box, swap=0) is the likelier throttle.
+
+## Third session (devin-60050963) — SCRIPTC_JOBS=8 on the parallel-codegen baseline, cold vs warm cache split
+
+Same box (8 vCPU / 31GB RAM, swap=0). scriptc @ `work/pyright-probe` REBASED onto `origin/main` mid-session (`930447666` = relaxed tsc codes + `ecf42431f` parallel-codegen `--jobs`/`SCRIPTC_JOBS` merged). `@scriptc/llvm-linux-x64-gnu` helper + `@scriptc/runtime-linux-x64-gnu` pack were version-mismatched (embedded `scriptc_package_version` 0.3.5 vs 0.3.6) — fixed by `npm pack` of both 0.3.6 tarballs, then `pnpm --filter @scriptc/runtime-linux-x64-gnu build:native` (zig 0.16.0 via mise) because the work-branch runtime source has 5 symbols the published 0.3.6 pack lacks (`scr_dyn_native_date_from_ms`, `scr_coro_async_finish`, `scr_process_exec_argv`, `scr_dyn_error_string`, `scr_dyn_promise_key_get`).
+
+### Invocations
+```bash
+# cold builds (both)
+node ~/repos/scriptc/packages/cli/dist/main.js build dist-cli-dev/pyright-native.js -o /tmp/pyright-native
+# final build, after rebase onto parallel-codegen main
+SCRIPTC_JOBS=8 node ~/repos/scriptc/packages/cli/dist/main.js build dist-cli-dev/pyright-native.js -o /tmp/pyright-native
+```
+One `scriptc-llvm-codegen emit` process per build; ~69 `--output` partition objects on the emit cmdline both times observed.
+
+### Partition cache dirs observed
+- `native-partitions-v1/7cfcfa8f58eee4c6dc4f57442f0bfcaf/` — 64 `.o`, 644MB (pre-NativeStats bundle; shared by builds 1+2 below → warm cache)
+- `native-partitions-v1/71e6e7932148daf9b547fcb749018b1a/` — 192 `.o`, 1.1GB (post-NativeStats bundle; build 3, still partial at report time)
+
+Partition count clearly varies with bundle content (68 vs 192 objects across the two inputs).
+
+### Wall times / CPU / RSS
+| build | input | elapsed | CPU | peak RSS | outcome |
+| --- | --- | --- | --- | --- | --- |
+| 0.3.6 pre-rebase, stale npm runtime pack | bundle A | ~44 min codegen | ~117–187% (≈1.2–1.9 cores) | ~19.7GB | codegen done → **LINK FAILED**: 10 undefined refs (5 symbols absent from published pack) |
+| same toolchain + rebuilt runtime pack | bundle A (identical file) | **~4 min total** | — | — | completed; `pyright-native .` ran → `tryStat: SC1101` (fslib delegate ternary demoted builtin `fs.Stats` to unknown) |
+| 0.3.6 rebased (`--jobs` main) + `SCRIPTC_JOBS=8` | bundle B (NativeStats change) | **45+ min, still emitting at report time** | ~115–160% (≈1.2–1.6 cores) | ~19.7GB | in progress at wrap-up |
+
+### Hypothesis delta
+Corroborates devin-26450b1b's serial-emit observation: **`SCRIPTC_JOBS=8` did NOT multiply cores** — single codegen process still runs ~1.2 cores through the whole emit. Either `--jobs` bounds a stage that isn't the bottleneck, or partition emission is serial inside `scriptc-llvm-codegen` on this input. The fast path that DID work is the **partition cache**: identical input → ~4min end-to-end. So the practical lever isn't --jobs, it's (a) keep input bytes stable across iterations (probe patches invalidate the cache — hash is over the whole file), and (b) reduce per-partition count/overhead as section 6 proposes. Memory never swapped; RSS ~20GB/31GB is high but not the throttle — CPU-bound single thread is.
