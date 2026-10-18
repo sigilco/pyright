@@ -8,6 +8,7 @@
 
 import { some } from '../collectionUtils';
 import { getRootLength, getShortenedFileName } from '../pathUtils';
+import type { FilePath } from '../filePath';
 import type { Uri } from './uriInterface';
 
 export type JsonObjType = any;
@@ -197,7 +198,7 @@ export abstract class BaseUri implements Uri {
 
     abstract getPath(): string;
 
-    abstract getFilePath(): string;
+    abstract getFilePath(): FilePath;
 
     getRelativePathComponents(to: Uri): readonly string[] {
         const fromComponents = this.getPathComponents();

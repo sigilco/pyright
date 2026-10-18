@@ -6,6 +6,8 @@
  * URI interface definition (extracted to break circular dependency).
  */
 
+import type { FilePath } from '../filePath';
+
 export interface Uri {
     // Unique key for storing in maps.
     readonly key: string;
@@ -86,7 +88,7 @@ export interface Uri {
     getRelativePath(child: Uri): string | undefined;
     getPathComponents(): readonly string[];
     getPath(): string;
-    getFilePath(): string;
+    getFilePath(): FilePath;
     getRelativePathComponents(to: Uri): readonly string[];
     getShortenedFileName(maxDirLength?: number): string;
     stripExtension(): Uri;

@@ -128,7 +128,7 @@ export function findPythonSearchPaths(
     const pathResult = host.getPythonSearchPaths(configOptions.pythonPath, importLogger, configOptions.projectRoot);
     if (includeWatchPathsOnly && workspaceRoot && !workspaceRoot.isEmpty()) {
         const paths = pathResult.paths
-            .filter((p) => !p.startsWithUri(workspaceRoot) || p.startsWith(pathResult.prefix))
+            .filter((p) => !p.startsWithUri(workspaceRoot) || p.startsWithUri(pathResult.prefix))
             .map((p) => fs.realCasePath(p));
 
         return paths;

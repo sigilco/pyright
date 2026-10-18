@@ -6,6 +6,7 @@
  * URI class that represents a constant/marker URI.
  */
 
+import type { FilePath } from '../filePath';
 import { BaseUri } from './baseUri';
 import { Uri } from './uri';
 
@@ -115,8 +116,8 @@ export class ConstantUri extends BaseUri {
         return '';
     }
 
-    override getFilePath(): string {
-        return '';
+    override getFilePath(): FilePath {
+        return '' as FilePath;
     }
 
     override stripExtension(): Uri {

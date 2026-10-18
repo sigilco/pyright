@@ -6,6 +6,7 @@
  * URI class that represents a file path. These URIs are always 'file' schemed.
  */
 
+import type { FilePath } from '../filePath';
 import { URI } from 'vscode-uri';
 import { isArray } from '../core';
 import {
@@ -189,8 +190,8 @@ export class FileUri extends BaseUri {
         return this._getNormalizedPath();
     }
 
-    override getFilePath(): string {
-        return this._filePath;
+    override getFilePath(): FilePath {
+        return this._filePath as FilePath;
     }
 
     override resolvePaths(...paths: string[]): Uri {

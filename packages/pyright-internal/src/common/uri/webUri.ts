@@ -11,6 +11,7 @@
  * - vscode-vfs://github.com/microsoft/debugpy/debugpy/launcher/debugAdapter.py
  */
 
+import type { FilePath } from '../filePath';
 import { URI } from 'vscode-uri';
 import { getRootLength, hasTrailingDirectorySeparator, resolvePaths } from '../pathUtils';
 import { BaseUri, JsonObjType } from './baseUri';
@@ -175,8 +176,8 @@ export class WebUri extends BaseUri {
         return this._path;
     }
 
-    override getFilePath(): string {
-        return ''; // Web URIs don't have file paths so this is always empty.
+    override getFilePath(): FilePath {
+        return '' as FilePath; // Web URIs don't have file paths so this is always empty.
     }
 
     override resolvePaths(...paths: string[]): Uri {

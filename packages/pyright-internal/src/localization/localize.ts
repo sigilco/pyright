@@ -42,24 +42,28 @@ export class ParameterizedString<T extends {}> {
 }
 
 const defaultLocale = 'en-us';
-const stringMapsByLocale: Map<string, StringLookupMap> = new Map([
-    ['cs', csStrings as StringLookupMap],
-    ['de', deStrings],
-    ['en-us', enUsStrings],
-    ['en', enUsStrings],
-    ['es', esStrings],
-    ['fr', frStrings],
-    ['it', itStrings],
-    ['ja', jaStrings],
-    ['ko', koStrings],
-    ['pl', plStrings],
-    ['pt-br', ptBrStrings],
-    ['qps-ploc', qpsPlocStrings],
-    ['ru', ruStrings],
-    ['tr', trStrings],
-    ['zh-cn', zhCnStrings],
-    ['zh-tw', zhTwStrings],
-]);
+// scriptc: a `new Map` of the JSON module records unions all locale
+// record types, which collapses mixed string/{message,comment} fields to
+// `string` and throws on access. A plain `any`-membered registry keeps
+// every locale opaque until getRawStringFromMap walks it dynamically.
+const stringMapsByLocale: { [key: string]: any } = {
+    cs: csStrings,
+    de: deStrings,
+    'en-us': enUsStrings,
+    en: enUsStrings,
+    es: esStrings,
+    fr: frStrings,
+    it: itStrings,
+    ja: jaStrings,
+    ko: koStrings,
+    pl: plStrings,
+    'pt-br': ptBrStrings,
+    'qps-ploc': qpsPlocStrings,
+    ru: ruStrings,
+    tr: trStrings,
+    'zh-cn': zhCnStrings,
+    'zh-tw': zhTwStrings,
+};
 
 type CommentedStringValue = {
     message: string;
@@ -185,20 +189,17 @@ function loadDefaultStrings(): StringLookupMap {
     return {};
 }
 
-function getStringsForLocale(
-    localeMap: Map<string, StringLookupMap>,
-    locale: string
-): StringLookupMap | undefined {
-    return localeMap.get(locale);
+function getStringsForLocale(localeMap: { [key: string]: any }, locale: string): any {
+    return localeMap[locale];
 }
 
-export function loadStringsForLocale(locale: string, localeMap: Map<string, StringLookupMap>): StringLookupMap {
+export function loadStringsForLocale(locale: string, localeMap: { [key: string]: any }): StringLookupMap {
     if (locale === defaultLocale) {
         // No need to load override if we're using the default.
         return {};
     }
 
-    let override = localeMap.get(locale);
+    let override = localeMap[locale];
     if (override !== undefined) {
         return override;
     }
@@ -207,7 +208,7 @@ export function loadStringsForLocale(locale: string, localeMap: Map<string, Stri
     // general version.
     const localeSplit = locale.split('-');
     if (localeSplit.length > 0 && localeSplit[0]) {
-        override = localeMap.get(localeSplit[0]);
+        override = localeMap[localeSplit[0]];
         if (override !== undefined) {
             return override;
         }

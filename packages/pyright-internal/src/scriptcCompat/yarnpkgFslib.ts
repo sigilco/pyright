@@ -11,6 +11,7 @@
 // remain as data members for realFileSystem's EggZipOpenFS.findZip, which
 // short-circuits on non-zip paths anyway.
 
+import type { FilePath } from '../common/filePath';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -147,27 +148,27 @@ function wrapDirent(d: fs.Dirent): ScrDirent {
 export class NodeFS {
     readonly pathUtils = path.posix;
 
-    mapToBase(p: string): string {
+    mapToBase(p: FilePath): FilePath {
         return p;
     }
 
-    mapFromBase(p: string): string {
+    mapFromBase(p: FilePath): FilePath {
         return p;
     }
 
-    existsSync(p: string): boolean {
+    existsSync(p: FilePath): boolean {
         return fs.existsSync(p);
     }
 
-    mkdirSync(p: string, options?: any): void {
+    mkdirSync(p: FilePath, options?: any): void {
         fs.mkdirSync(p, options);
     }
 
-    chdir(p: string): void {
+    chdir(p: FilePath): void {
         process.chdir(p);
     }
 
-    readdirSync(p: string, options?: any): any {
+    readdirSync(p: FilePath, options?: any): any {
         if (options && options.withFileTypes) {
             // scriptc: node:fs.readdirSync only lowers literal options objects,
             // so the { withFileTypes: true } call must be spelled out here.
@@ -182,13 +183,13 @@ export class NodeFS {
         return entries;
     }
 
-    readFileSync(p: string, encoding?: any): any {
+    readFileSync(p: FilePath, encoding?: any): any {
         // Union `string | Buffer` returns collapse to a single arm under
         // scriptc; every real caller reads utf8, so decode unconditionally.
         return fs.readFileSync(p, 'utf8');
     }
 
-    openSync(p: string, flags?: any): number {
+    openSync(p: FilePath, flags?: any): number {
         return fs.openSync(p, flags);
     }
 
@@ -200,11 +201,11 @@ export class NodeFS {
         fs.closeSync(fd);
     }
 
-    writeFileSync(p: string, content: any, options?: any): void {
+    writeFileSync(p: FilePath, content: any, options?: any): void {
         fs.writeFileSync(p, content, options);
     }
 
-    statSync(p: string): ScrStats {
+    statSync(p: FilePath): ScrStats {
         const s = fs.statSync(p);
         const st = new ScrStats();
         st._isFile = s.isFile();
@@ -235,7 +236,7 @@ export class NodeFS {
         return st;
     }
 
-    lstatSync(p: string): ScrStats {
+    lstatSync(p: FilePath): ScrStats {
         const s = fs.lstatSync(p);
         const st = new ScrStats();
         st._isFile = s.isFile();
@@ -266,35 +267,35 @@ export class NodeFS {
         return st;
     }
 
-    rmdirSync(p: string): void {
+    rmdirSync(p: FilePath): void {
         fs.rmdirSync(p);
     }
 
-    unlinkSync(p: string): void {
+    unlinkSync(p: FilePath): void {
         fs.unlinkSync(p);
     }
 
-    realpathSync(p: string): string {
-        return fs.realpathSync(p);
+    realpathSync(p: FilePath): FilePath {
+        return fs.realpathSync(p) as FilePath;
     }
 
-    createReadStream(p: string, options?: any): any {
+    createReadStream(p: FilePath, options?: any): any {
         return fs.createReadStream(p, options);
     }
 
-    createWriteStream(p: string, options?: any): any {
+    createWriteStream(p: FilePath, options?: any): any {
         return fs.createWriteStream(p, options);
     }
 
-    copyFileSync(source: string, dest: string): void {
+    copyFileSync(source: FilePath, dest: FilePath): void {
         fs.copyFileSync(source, dest);
     }
 
-    async readFilePromise(p: string, encoding?: any): Promise<any> {
+    async readFilePromise(p: FilePath, encoding?: any): Promise<any> {
         return fs.promises.readFile(p, encoding);
     }
 
-    watchFile(p: string, a: any, b?: any): any {
+    watchFile(p: FilePath, a: any, b?: any): any {
         throw new Error('watchFile is not supported in the scriptc native build');
     }
 
@@ -355,71 +356,71 @@ export class NodePathFS extends ProxiedFS {
         super({ baseFs });
     }
 
-    override mapToBase(p: string): string {
-        return fromPortablePath(p);
+    override mapToBase(p: FilePath): FilePath {
+        return fromPortablePath(p) as FilePath;
     }
 
-    override mapFromBase(p: string): string {
-        return toPortablePath(p);
+    override mapFromBase(p: FilePath): FilePath {
+        return toPortablePath(p) as FilePath;
     }
 
-    override existsSync(p: string): boolean {
+    override existsSync(p: FilePath): boolean {
         return super.existsSync(this.mapToBase(p));
     }
 
-    override mkdirSync(p: string, options?: any): void {
+    override mkdirSync(p: FilePath, options?: any): void {
         super.mkdirSync(this.mapToBase(p), options);
     }
 
-    override chdir(p: string): void {
+    override chdir(p: FilePath): void {
         super.chdir(this.mapToBase(p));
     }
 
-    override readdirSync(p: string, options?: any): any {
+    override readdirSync(p: FilePath, options?: any): any {
         return super.readdirSync(this.mapToBase(p), options);
     }
 
-    override readFileSync(p: string, encoding?: any): any {
+    override readFileSync(p: FilePath, encoding?: any): any {
         return super.readFileSync(this.mapToBase(p), encoding);
     }
 
-    override openSync(p: string, flags?: any): number {
+    override openSync(p: FilePath, flags?: any): number {
         return super.openSync(this.mapToBase(p), flags);
     }
 
-    override writeFileSync(p: string, content: any, options?: any): void {
+    override writeFileSync(p: FilePath, content: any, options?: any): void {
         super.writeFileSync(this.mapToBase(p), content, options);
     }
 
-    override statSync(p: string): ScrStats {
+    override statSync(p: FilePath): ScrStats {
         return super.statSync(this.mapToBase(p));
     }
 
-    override lstatSync(p: string): ScrStats {
+    override lstatSync(p: FilePath): ScrStats {
         return super.lstatSync(this.mapToBase(p));
     }
 
-    override rmdirSync(p: string): void {
+    override rmdirSync(p: FilePath): void {
         super.rmdirSync(this.mapToBase(p));
     }
 
-    override unlinkSync(p: string): void {
+    override unlinkSync(p: FilePath): void {
         super.unlinkSync(this.mapToBase(p));
     }
 
-    override realpathSync(p: string): string {
+    override realpathSync(p: FilePath): FilePath {
         return super.realpathSync(this.mapToBase(p));
     }
 
-    override createReadStream(p: string, options?: any): any {
+    override createReadStream(p: FilePath, options?: any): any {
         return super.createReadStream(this.mapToBase(p), options);
     }
 
-    override createWriteStream(p: string, options?: any): any {
+    override createWriteStream(p: FilePath, options?: any): any {
         return super.createWriteStream(this.mapToBase(p), options);
     }
 
-    override copyFileSync(source: string, dest: string): void {
+    override copyFileSync(source: FilePath, dest: FilePath): void {
         super.copyFileSync(this.mapToBase(source), this.mapToBase(dest));
     }
 }
