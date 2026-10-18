@@ -8,6 +8,7 @@ const rspack = createRequire(__filename)('@rspack/core');
 // emitted JS closer to the authored source (needed by the scriptc probe).
 const devOutPath = path.resolve(__dirname, 'dist-cli-dev');
 const typeshedFallback = path.resolve(__dirname, '..', 'pyright-internal', 'typeshed-fallback');
+const nlsJson = path.resolve(__dirname, '..', 'pyright-internal', 'src', 'localization');
 
 // Single-file CLI-only variant of rspack.config.js: emits just the typecheck
 // CLI entry (no langserver) with split chunks disabled so the output is one
@@ -63,7 +64,15 @@ module.exports = (_, { mode }) => {
                 },
             ],
         },
-        plugins: [new rspack.CopyRspackPlugin({ patterns: [{ from: typeshedFallback, to: 'typeshed-fallback' }] })],
+        plugins: [
+            new rspack.CopyRspackPlugin({
+                patterns: [
+                    { from: typeshedFallback, to: 'typeshed-fallback' },
+                    // localize.ts lazy-loads nls JSONs at runtime instead of bundling them.
+                    { from: nlsJson, to: 'nls', filter: (filepath) => /package\.nls\..+\.json$/.test(filepath) },
+                ],
+            }),
+        ],
         optimization: {
             splitChunks: false,
             // Dev mode: hoist ESM modules into the entry scope. Keeping module

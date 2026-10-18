@@ -1,7 +1,7 @@
 // Post-process dist-cli-dev/pyright-flat.js into a scriptc-native-targeting
 // bundle: strip the createRequire banner and replace every __require("builtin")
 // with a lookup over real ESM imports (scriptc has no CJS require at runtime).
-import { readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const src = 'dist-cli-dev/pyright-flat.js';
 const out = 'dist-cli-dev/pyright-native.js';
@@ -18,7 +18,9 @@ const imports = builtins
     .filter((b) => !UNSUPPORTED.has(b))
     .map((b, i) => `import * as __builtin_${b.replace(/[^a-zA-Z0-9]/g, '_')} from 'node:${b}';`)
     .join('\n');
-const map = `const __builtinRequire = (x) => ({${builtins.map((b) => `${JSON.stringify(b)}: ${UNSUPPORTED.has(b) ? '{}' : `__builtin_${b.replace(/[^a-zA-Z0-9]/g, '_')}`}`).join(', ')}})[x];`;
+const map = `const __builtinRequire = (x) => ({${builtins
+    .map((b) => `${JSON.stringify(b)}: ${UNSUPPORTED.has(b) ? '{}' : `__builtin_${b.replace(/[^a-zA-Z0-9]/g, '_')}`}`)
+    .join(', ')}})[x];`;
 // import.meta-free __dirname for the native target; the runtime resolves
 // typeshed via process.execPath's directory anyway.
 const shim = `${imports}\nconst __dirname = '';\n${map}\n`;
@@ -113,3 +115,17 @@ code = shim + code.replace(/__require\(/g, '__builtinRequire(');
 // noise, so opt the whole file out.
 writeFileSync(out, '// @ts-nocheck\n' + code);
 console.log(`wrote ${out} (${builtins.length} builtins mapped: ${builtins.join(', ')})`);
+
+// Ship the nls string tables next to the bundle — localize.ts lazy-loads
+// them at runtime instead of compiling them into the JS input.
+const nlsSrc = new URL('../../pyright-internal/src/localization/', import.meta.url);
+const nlsOut = 'dist-cli-dev/nls';
+mkdirSync(nlsOut, { recursive: true });
+let nlsCount = 0;
+for (const file of readdirSync(nlsSrc)) {
+    if (/^package\.nls\..+\.json$/.test(file)) {
+        copyFileSync(new URL(file, nlsSrc), `${nlsOut}/${file}`);
+        nlsCount++;
+    }
+}
+console.log(`copied ${nlsCount} nls files to ${nlsOut}`);
