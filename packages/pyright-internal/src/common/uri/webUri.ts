@@ -14,7 +14,6 @@
 import { URI } from 'vscode-uri';
 import { getRootLength, hasTrailingDirectorySeparator, resolvePaths } from '../pathUtils';
 import { BaseUri, JsonObjType } from './baseUri';
-import { cacheMethodWithNoArgs, cacheProperty, cacheStaticFunc } from './memoization';
 import { Uri } from './uri';
 
 export class WebUri extends BaseUri {
@@ -47,7 +46,6 @@ export class WebUri extends BaseUri {
         return this._query;
     }
 
-    @cacheProperty()
     override get root(): Uri {
         const rootPath = this.getRootPath();
         if (rootPath !== this._path) {
@@ -56,14 +54,12 @@ export class WebUri extends BaseUri {
         return this;
     }
 
-    @cacheProperty()
     override get fileName(): string {
         // Path should already be normalized, just get the last on a split of '/'.
         const components = this._path.split('/');
         return components[components.length - 1];
     }
 
-    @cacheProperty()
     override get lastExtension(): string {
         const basename = this.fileName;
         const index = basename.lastIndexOf('.');
@@ -73,7 +69,6 @@ export class WebUri extends BaseUri {
         return '';
     }
 
-    @cacheStaticFunc()
     static createWebUri(
         scheme: string,
         authority: string,
@@ -217,7 +212,6 @@ export class WebUri extends BaseUri {
         return this;
     }
 
-    @cacheMethodWithNoArgs()
     override getDirectory(): Uri {
         if (this._path.length === 0) {
             return this;

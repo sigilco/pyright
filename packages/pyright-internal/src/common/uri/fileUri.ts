@@ -22,7 +22,6 @@ import {
     stripFileExtension,
 } from '../pathUtils';
 import { BaseUri, JsonObjType } from './baseUri';
-import { cacheMethodWithNoArgs, cacheProperty, cacheStaticFunc } from './memoization';
 import { SerializedType, Uri, UriKinds } from './uri';
 
 type FileUriSerializedType = [0, string, string, string, string | undefined, 1 | 0];
@@ -57,17 +56,14 @@ export class FileUri extends BaseUri {
         return this._query;
     }
 
-    @cacheProperty()
     override get fileName(): string {
         return getFileName(this._filePath);
     }
 
-    @cacheProperty()
     override get lastExtension(): string {
         return getFileExtension(this._filePath);
     }
 
-    @cacheProperty()
     override get root(): Uri {
         const rootPath = this.getRootPath();
         if (rootPath !== this._filePath) {
@@ -80,7 +76,6 @@ export class FileUri extends BaseUri {
         return this._isCaseSensitive;
     }
 
-    @cacheStaticFunc()
     static createFileUri(
         filePath: string,
         query: string,
@@ -257,7 +252,6 @@ export class FileUri extends BaseUri {
         return this;
     }
 
-    @cacheMethodWithNoArgs()
     override getDirectory(): Uri {
         const filePath = this._filePath;
         let dir = getDirectoryPath(filePath);

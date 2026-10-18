@@ -71,7 +71,7 @@ export class UriMap<T> implements Map<Uri, T> {
                 }
                 return { done: false, value: [key.value[1], value.value[1]] };
             }
-        })();
+        })() as unknown as MapIterator<[Uri, T]>;
     }
 
     keys(): MapIterator<Uri> {

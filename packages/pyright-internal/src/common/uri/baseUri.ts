@@ -8,7 +8,6 @@
 
 import { some } from '../collectionUtils';
 import { getRootLength, getShortenedFileName } from '../pathUtils';
-import { cacheProperty } from './memoization';
 import type { Uri } from './uriInterface';
 
 export type JsonObjType = any;
@@ -50,35 +49,30 @@ export abstract class BaseUri implements Uri {
     abstract get root(): Uri;
 
     // Returns a URI where the path contains the path with .py appended.
-    @cacheProperty()
     get packageUri(): Uri {
         // This is assuming that the current path is a file already.
         return this.addExtension('.py');
     }
 
     // Returns a URI where the path contains the path with .pyi appended.
-    @cacheProperty()
     get packageStubUri(): Uri {
         // This is assuming that the current path is a file already.
         return this.addExtension('.pyi');
     }
 
     // Returns a URI where the path has __init__.py appended.
-    @cacheProperty()
     get initPyUri(): Uri {
         // This is assuming that the current path is a directory already.
         return this.combinePathsUnsafe('__init__.py');
     }
 
     // Returns a URI where the path has __init__.pyi appended.
-    @cacheProperty()
     get initPyiUri(): Uri {
         // This is assuming that the current path is a directory already.
         return this.combinePathsUnsafe('__init__.pyi');
     }
 
     // Returns a URI where the path has py.typed appended.
-    @cacheProperty()
     get pytypedUri(): Uri {
         // This is assuming that the current path is a directory already.
         return this.combinePathsUnsafe('py.typed');
