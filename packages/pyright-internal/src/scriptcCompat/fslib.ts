@@ -38,71 +38,71 @@ const ZIP_UNAVAILABLE = 'scriptc-native build: zip archive support is not availa
  * method forwards to it when present. This collapses fslib's proxy-class
  * zoo into one chain without changing observable behavior on real paths.
  */
-export class FakeFS<P> {
-    constructor(protected readonly delegate?: FakeFS<unknown>) {}
+export class FakeFS {
+    constructor(protected readonly delegate?: FakeFS) {}
 
-    existsSync(p: P): boolean {
-        return this.delegate ? this.delegate.existsSync(p as never) : fs.existsSync(p as string);
+    existsSync(p: string): boolean {
+        return this.delegate ? this.delegate.existsSync(p) : fs.existsSync(p);
     }
 
-    statSync(p: P): fs.Stats {
-        return this.delegate ? this.delegate.statSync(p as never) : fs.statSync(p as string);
+    statSync(p: string): fs.Stats {
+        return this.delegate ? this.delegate.statSync(p) : fs.statSync(p);
     }
 
-    lstatSync(p: P): fs.Stats {
-        return this.delegate ? this.delegate.lstatSync(p as never) : fs.lstatSync(p as string);
+    lstatSync(p: string): fs.Stats {
+        return this.delegate ? this.delegate.lstatSync(p) : fs.lstatSync(p);
     }
 
-    realpathSync(p: P): string {
-        return this.delegate ? this.delegate.realpathSync(p as never) : fs.realpathSync(p as string);
+    realpathSync(p: string): string {
+        return this.delegate ? this.delegate.realpathSync(p) : fs.realpathSync(p);
     }
 
-    readdirSync(p: P): string[];
-    readdirSync(p: P, options: { withFileTypes: true }): fs.Dirent[];
-    readdirSync(p: P, options?: { withFileTypes?: boolean }): string[] | fs.Dirent[] {
+    readdirSync(p: string): string[];
+    readdirSync(p: string, options: { withFileTypes: true }): fs.Dirent[];
+    readdirSync(p: string, options?: { withFileTypes?: boolean }): string[] | fs.Dirent[] {
         if (this.delegate) {
             return options?.withFileTypes
-                ? this.delegate.readdirSync(p as never, { withFileTypes: true })
-                : this.delegate.readdirSync(p as never);
+                ? this.delegate.readdirSync(p, { withFileTypes: true })
+                : this.delegate.readdirSync(p);
         }
         return options?.withFileTypes
-            ? fs.readdirSync(p as string, { withFileTypes: true })
-            : fs.readdirSync(p as string);
+            ? fs.readdirSync(p, { withFileTypes: true })
+            : fs.readdirSync(p);
     }
 
-    readFileSync(p: P): Buffer;
-    readFileSync(p: P, encoding: BufferEncoding): string;
-    readFileSync(p: P, encoding?: BufferEncoding): Buffer | string {
+    readFileSync(p: string): Buffer;
+    readFileSync(p: string, encoding: BufferEncoding): string;
+    readFileSync(p: string, encoding?: BufferEncoding): Buffer | string {
         if (this.delegate) {
             return encoding
-                ? this.delegate.readFileSync(p as never, encoding)
-                : this.delegate.readFileSync(p as never);
+                ? this.delegate.readFileSync(p, encoding)
+                : this.delegate.readFileSync(p);
         }
-        return encoding ? fs.readFileSync(p as string, encoding) : fs.readFileSync(p as string);
+        return encoding ? fs.readFileSync(p, encoding) : fs.readFileSync(p);
     }
 
-    readFilePromise(p: P): Promise<Buffer>;
-    readFilePromise(p: P, encoding: BufferEncoding): Promise<string>;
-    readFilePromise(p: P, encoding?: BufferEncoding): Promise<Buffer | string> {
+    readFilePromise(p: string): Promise<Buffer>;
+    readFilePromise(p: string, encoding: BufferEncoding): Promise<string>;
+    readFilePromise(p: string, encoding?: BufferEncoding): Promise<Buffer | string> {
         if (this.delegate) {
             return encoding
-                ? this.delegate.readFilePromise(p as never, encoding)
-                : this.delegate.readFilePromise(p as never);
+                ? this.delegate.readFilePromise(p, encoding)
+                : this.delegate.readFilePromise(p);
         }
         return encoding
-            ? fs.promises.readFile(p as string, encoding)
-            : fs.promises.readFile(p as string);
+            ? fs.promises.readFile(p, encoding)
+            : fs.promises.readFile(p);
     }
 
-    writeFileSync(p: P, data: string | Buffer, encoding?: BufferEncoding): void {
+    writeFileSync(p: string, data: string | Buffer, encoding?: BufferEncoding): void {
         if (this.delegate) {
-            return this.delegate.writeFileSync(p as never, data, encoding);
+            return this.delegate.writeFileSync(p, data, encoding);
         }
-        fs.writeFileSync(p as string, data, encoding ? { encoding } : undefined);
+        fs.writeFileSync(p, data, encoding ? { encoding } : undefined);
     }
 
-    openSync(p: P, flags: string): number {
-        return this.delegate ? this.delegate.openSync(p as never, flags) : fs.openSync(p as string, flags);
+    openSync(p: string, flags: string): number {
+        return this.delegate ? this.delegate.openSync(p, flags) : fs.openSync(p, flags);
     }
 
     readSync(fd: number, buffer: Buffer, offset: number, length: number, position: number | null): number {
@@ -118,50 +118,50 @@ export class FakeFS<P> {
         fs.closeSync(fd);
     }
 
-    mkdirSync(p: P, options?: { recursive?: boolean; mode?: number }): void {
+    mkdirSync(p: string, options?: { recursive?: boolean; mode?: number }): void {
         if (this.delegate) {
-            return this.delegate.mkdirSync(p as never, options);
+            return this.delegate.mkdirSync(p, options);
         }
-        fs.mkdirSync(p as string, options);
+        fs.mkdirSync(p, options);
     }
 
-    rmdirSync(p: P): void {
+    rmdirSync(p: string): void {
         if (this.delegate) {
-            return this.delegate.rmdirSync(p as never);
+            return this.delegate.rmdirSync(p);
         }
-        fs.rmdirSync(p as string);
+        fs.rmdirSync(p);
     }
 
-    unlinkSync(p: P): void {
+    unlinkSync(p: string): void {
         if (this.delegate) {
-            return this.delegate.unlinkSync(p as never);
+            return this.delegate.unlinkSync(p);
         }
-        fs.unlinkSync(p as string);
+        fs.unlinkSync(p);
     }
 
-    copyFileSync(src: P, dest: P): void {
+    copyFileSync(src: string, dest: string): void {
         if (this.delegate) {
-            return this.delegate.copyFileSync(src as never, dest as never);
+            return this.delegate.copyFileSync(src, dest);
         }
-        fs.copyFileSync(src as string, dest as string);
+        fs.copyFileSync(src, dest);
     }
 
-    createReadStream(p: P): fs.ReadStream {
+    createReadStream(p: string): fs.ReadStream {
         return this.delegate
-            ? (this.delegate.createReadStream(p as never) as fs.ReadStream)
-            : fs.createReadStream(p as string);
+            ? (this.delegate.createReadStream(p) as fs.ReadStream)
+            : fs.createReadStream(p);
     }
 
-    createWriteStream(p: P): fs.WriteStream {
+    createWriteStream(p: string): fs.WriteStream {
         return this.delegate
-            ? (this.delegate.createWriteStream(p as never) as fs.WriteStream)
-            : fs.createWriteStream(p as string);
+            ? (this.delegate.createWriteStream(p) as fs.WriteStream)
+            : fs.createWriteStream(p);
     }
 }
 
-export class PosixFS extends FakeFS<NativePath> {
-    constructor(delegate: FakeFS<PortablePath>) {
-        super(delegate as FakeFS<unknown>);
+export class PosixFS extends FakeFS {
+    constructor(delegate: FakeFS) {
+        super(delegate);
     }
 
     mapToBase(p: NativePath): PortablePath {
@@ -173,8 +173,8 @@ export class PosixFS extends FakeFS<NativePath> {
     }
 }
 
-export class VirtualFS extends FakeFS<PortablePath> {
-    constructor(options: { baseFs: FakeFS<PortablePath> }) {
+export class VirtualFS extends FakeFS {
+    constructor(options: { baseFs: FakeFS }) {
         super(options.baseFs);
     }
 }
@@ -199,8 +199,8 @@ export class ZipFS {
  * getZipSync throws, which callers such as EggZipOpenFS.findZip already
  * catch and treat as "not a zip".
  */
-export class ZipOpenFS extends FakeFS<PortablePath> {
-    public readonly baseFs: FakeFS<PortablePath>;
+export class ZipOpenFS extends FakeFS {
+    public readonly baseFs: FakeFS;
     public readonly filter: RegExp | null;
     public readonly isZip = new Set<PortablePath>();
     public readonly notZip = new Set<PortablePath>();
@@ -208,7 +208,7 @@ export class ZipOpenFS extends FakeFS<PortablePath> {
 
     constructor(options?: ZipOpenFSOptions) {
         super();
-        this.baseFs = new FakeFS<PortablePath>();
+        this.baseFs = new FakeFS();
         this.filter = options?.filter ?? null;
     }
 
