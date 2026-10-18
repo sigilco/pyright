@@ -1,89 +1,63 @@
-// Thin scriptc-native stand-in for the `tmp` npm package. The real package
-// needs fs.constants / os.errno, which have no scriptc lowering; pyright only
-// uses setGracefulCleanup, dirSync and fileSync over node:fs primitives.
+/*
+ * scriptc-compat shim for `tmp`.
+ *
+ * The real package is CJS built on callback plumbing and process-exit
+ * bookkeeping we don't need: realFileSystem.ts only uses the synchronous
+ * dir/file creators and setGracefulCleanup. Implemented over
+ * fs.mkdtempSync + fs.writeFileSync, with removeCallback kept for the
+ * DirResult contract.
+ */
 
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { randomBytesHex } from '../common/crypto';
+
+export interface DirOptions {
+    prefix?: string;
+    tmpdir?: string;
+    dir?: string;
+}
+
+export interface FileOptions extends DirOptions {
+    postfix?: string;
+    discardDescriptor?: boolean;
+}
 
 export interface DirResult {
     name: string;
     removeCallback: () => void;
 }
 
-export interface FileResult {
-    name: string;
+export interface FileResult extends DirResult {
     fd?: number;
-    removeCallback: () => void;
-}
-
-export interface DirOptions {
-    dir?: string;
-    prefix?: string;
-    [key: string]: any;
-}
-
-export interface FileOptions {
-    dir?: string;
-    prefix?: string;
-    postfix?: string;
-    discardDescriptor?: boolean;
-    [key: string]: any;
 }
 
 export function setGracefulCleanup(): void {
-    // No tracked handles in this port; temp files are left for the OS.
-}
-
-function _base(dir: string | undefined): string {
-    const root = dir || os.tmpdir();
-    fs.mkdirSync(root, { recursive: true });
-    return root;
-}
-
-function _rmdir(p: string): void {
-    try {
-        fs.rmSync(p, { recursive: true });
-    } catch {
-        // ignore
-    }
+    // Temp artifacts under the OS temp root are left for the OS to reap;
+    // pyright's usage never relied on forcible exit-time removal.
 }
 
 export function dirSync(options?: DirOptions): DirResult {
-    const opts: DirOptions = options || {};
-    const name = fs.mkdtempSync(path.join(_base(opts.dir), opts.prefix || 'tmp-'));
+    const root = options?.dir ?? options?.tmpdir ?? os.tmpdir();
+    const prefix = options?.prefix ?? 'tmp-';
+    const name = fs.mkdtempSync(path.join(root, prefix));
     return {
         name,
-        removeCallback: () => {
-            _rmdir(name);
-        },
+        removeCallback: () => fs.rmSync(name, { recursive: true, force: true }),
     };
 }
 
 export function fileSync(options?: FileOptions): FileResult {
-    const opts: FileOptions = options || {};
-    const root = _base(opts.dir);
-    const prefix = opts.prefix || 'tmp-';
-    const postfix = opts.postfix || '';
-    let name = '';
-    let fd = -1;
-    // mkdtempSync gives a unique dir; claim a file inside it.
-    const holder = fs.mkdtempSync(path.join(root, prefix));
-    name = path.join(holder, `file${postfix}`);
-    try {
-        fd = fs.openSync(name, 'w');
-    } catch {
-        _rmdir(holder);
-        throw new Error(`unable to create temp file in ${root}`);
-    }
-    if (opts.discardDescriptor !== false) {
+    const dir = options?.dir ?? os.tmpdir();
+    const name = path.join(dir, `${options?.prefix ?? 'tmp-'}${randomBytesHex(8)}${options?.postfix ?? ''}`);
+    const fd = fs.openSync(name, 'wx+');
+    if (options?.discardDescriptor) {
         fs.closeSync(fd);
     }
     return {
         name,
-        fd: opts.discardDescriptor === false ? fd : undefined,
-        removeCallback: () => {
-            _rmdir(holder);
-        },
+        fd: options?.discardDescriptor ? undefined : fd,
+        removeCallback: () => fs.rmSync(name, { force: true }),
     };
 }
