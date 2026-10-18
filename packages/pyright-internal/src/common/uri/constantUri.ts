@@ -9,7 +9,6 @@
 import type { FilePath } from '../filePath';
 import { BaseUri } from './baseUri';
 import { Uri } from './uri';
-import type { FilePath } from './uriInterface';
 
 export class ConstantUri extends BaseUri {
     constructor(name: string) {

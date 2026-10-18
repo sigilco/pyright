@@ -10,6 +10,9 @@
 
 export * from './vscodeJsonrpc';
 export * from './vscodeLanguageserverProtocol';
+// Both shims declare NotificationHandler/RequestHandler; an explicit export
+// disambiguates the star-export collision for tsc (esbuild is indifferent).
+export { NotificationHandler, RequestHandler } from './vscodeJsonrpc';
 export * from 'vscode-languageserver-types';
 
 export function createConnection(..._args: any[]): never {

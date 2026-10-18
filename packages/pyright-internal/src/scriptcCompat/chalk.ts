@@ -113,7 +113,7 @@ chalk.Instance = class {
     constructor() {
         return chalk;
     }
-};
+} as unknown as ChalkInstance['Instance'];
 chalk.stderr = chalk;
 chalk.supportsColor = false;
 

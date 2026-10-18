@@ -8,7 +8,9 @@
 
 import { Uri } from './uri';
 
-export class UriMap<T> implements Map<Uri, T> {
+// scriptc: `implements Map` would force symbol-keyed members
+// ([Symbol.toStringTag]/[Symbol.dispose]) which have no lowering.
+export class UriMap<T> {
     private _keys = new Map<string, Uri>();
     private _values = new Map<string, T>();
 
@@ -21,7 +23,7 @@ export class UriMap<T> implements Map<Uri, T> {
     }
     forEach(callbackfn: (value: T, key: Uri, map: Map<Uri, T>) => void, thisArg?: any): void {
         this._keys.forEach((v, k) => {
-            callbackfn(this._values.get(k)!, v, this);
+            callbackfn(this._values.get(k)!, v, this as unknown as Map<Uri, T>);
         });
     }
     values(): MapIterator<T> {
@@ -63,14 +65,14 @@ export class UriMap<T> implements Map<Uri, T> {
     }
 }
 
-class UriMapIterator<K extends Uri, V> implements MapIterator<[K, V]> {
+class UriMapIterator<K extends Uri, V> {
     constructor(
         private _keys: MapIterator<[string, K]>,
         private _values: MapIterator<[string, V]>
     ) {}
 
     [Symbol.iterator](): MapIterator<[K, V]> {
-        return this;
+        return this as unknown as MapIterator<[K, V]>;
     }
 
     next(...args: [] | [undefined]): IteratorResult<[K, V], any> {

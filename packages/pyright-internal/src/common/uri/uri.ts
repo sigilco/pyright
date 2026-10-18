@@ -28,7 +28,8 @@ export type SerializedType = [UriKinds, ...any[]];
 
 // Re-export Uri interface from uriInterface.ts to maintain backward compatibility
 // Use interface merging instead of direct export to avoid conflict with Uri namespace
-import type { FilePath, Uri as UriInterface } from './uriInterface';
+import type { FilePath } from '../filePath';
+import type { Uri as UriInterface } from './uriInterface';
 export interface Uri extends UriInterface {}
 
 const _dosPathRegex = /^\/[a-zA-Z]:\//;

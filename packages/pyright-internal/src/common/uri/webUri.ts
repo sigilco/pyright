@@ -16,7 +16,6 @@ import { URI } from 'vscode-uri';
 import { getRootLength, hasTrailingDirectorySeparator, resolvePaths } from '../pathUtils';
 import { BaseUri, JsonObjType } from './baseUri';
 import { Uri } from './uri';
-import type { FilePath } from './uriInterface';
 
 export class WebUri extends BaseUri {
     private constructor(

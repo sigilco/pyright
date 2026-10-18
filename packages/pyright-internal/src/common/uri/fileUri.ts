@@ -24,7 +24,6 @@ import {
 } from '../pathUtils';
 import { BaseUri, JsonObjType } from './baseUri';
 import { SerializedType, Uri, UriKinds } from './uri';
-import type { FilePath } from './uriInterface';
 
 type FileUriSerializedType = [0, string, string, string, string | undefined, 1 | 0];
 
