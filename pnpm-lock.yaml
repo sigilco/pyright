@@ -16,7 +16,8 @@ overrides:
 patchedDependencies:
   '@yarnpkg/fslib@2.10.4': dd7e28066301c72f610abcf4a817ae99d0c8c9b5ad4b4e13eee4f36fac67a51e
   '@yarnpkg/libzip@2.3.0': ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0
-  smol-toml@1.8.0: 67fd572c60f3a608dc172cc6cb6cb5d8dca1267632e03001743b8ee8e13d1fd9
+  smol-toml@1.8.0: fea73d7ca1354b2579cf8bdb9782aae458b63ce174abb6be6b4b3842ad369fcc
+  source-map-support@0.5.21: 326a2f026fd5a597b8daa1646ef6a27673b6d23ecb77cbab28d364082e168398
   vscode-jsonrpc@9.0.1: 7d39f370d8dff70d0cc45bdcd3abb28f3b41db78f387981f3a2f643f3a0ddc05
 
 importers:
@@ -158,10 +159,10 @@ importers:
         version: 3.3.1
       smol-toml:
         specifier: ^1.8.0
-        version: 1.8.0(patch_hash=67fd572c60f3a608dc172cc6cb6cb5d8dca1267632e03001743b8ee8e13d1fd9)
+        version: 1.8.0(patch_hash=fea73d7ca1354b2579cf8bdb9782aae458b63ce174abb6be6b4b3842ad369fcc)
       source-map-support:
         specifier: ^0.5.21
-        version: 0.5.21
+        version: 0.5.21(patch_hash=326a2f026fd5a597b8daa1646ef6a27673b6d23ecb77cbab28d364082e168398)
       tmp:
         specifier: ^0.2.7
         version: 0.2.7
@@ -10127,7 +10128,7 @@ snapshots:
 
   smol-toml@1.6.1: {}
 
-  smol-toml@1.8.0(patch_hash=67fd572c60f3a608dc172cc6cb6cb5d8dca1267632e03001743b8ee8e13d1fd9): {}
+  smol-toml@1.8.0(patch_hash=fea73d7ca1354b2579cf8bdb9782aae458b63ce174abb6be6b4b3842ad369fcc): {}
 
   socks-proxy-agent@8.0.5(supports-color@7.2.0):
     dependencies:
@@ -10147,7 +10148,7 @@ snapshots:
       buffer-from: 1.1.2
       source-map: 0.6.1
 
-  source-map-support@0.5.21:
+  source-map-support@0.5.21(patch_hash=326a2f026fd5a597b8daa1646ef6a27673b6d23ecb77cbab28d364082e168398):
     dependencies:
       buffer-from: 1.1.2
       source-map: 0.6.1
@@ -10344,7 +10345,7 @@ snapshots:
       '@jridgewell/source-map': 0.3.11
       acorn: 8.17.0
       commander: 2.20.3
-      source-map-support: 0.5.21
+      source-map-support: 0.5.21(patch_hash=326a2f026fd5a597b8daa1646ef6a27673b6d23ecb77cbab28d364082e168398)
 
   test-exclude@6.0.0:
     dependencies:
