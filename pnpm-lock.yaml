@@ -14,7 +14,7 @@ overrides:
   ip-address: 10.4.0
 
 patchedDependencies:
-  '@yarnpkg/fslib@2.10.4': 7c655363374096c58e9a1b1148d8af835262da27b4859bf1737c4283cf5c9434
+  '@yarnpkg/fslib@2.10.4': dd7e28066301c72f610abcf4a817ae99d0c8c9b5ad4b4e13eee4f36fac67a51e
   '@yarnpkg/libzip@2.3.0': ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0
   smol-toml@1.8.0: 67fd572c60f3a608dc172cc6cb6cb5d8dca1267632e03001743b8ee8e13d1fd9
   vscode-jsonrpc@9.0.1: 7d39f370d8dff70d0cc45bdcd3abb28f3b41db78f387981f3a2f643f3a0ddc05
@@ -137,7 +137,7 @@ importers:
     dependencies:
       '@yarnpkg/fslib':
         specifier: 2.10.4
-        version: 2.10.4(patch_hash=7c655363374096c58e9a1b1148d8af835262da27b4859bf1737c4283cf5c9434)
+        version: 2.10.4(patch_hash=dd7e28066301c72f610abcf4a817ae99d0c8c9b5ad4b4e13eee4f36fac67a51e)
       '@yarnpkg/libzip':
         specifier: 2.3.0
         version: 2.3.0(patch_hash=ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0)
@@ -6980,7 +6980,7 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
-  '@yarnpkg/fslib@2.10.4(patch_hash=7c655363374096c58e9a1b1148d8af835262da27b4859bf1737c4283cf5c9434)':
+  '@yarnpkg/fslib@2.10.4(patch_hash=dd7e28066301c72f610abcf4a817ae99d0c8c9b5ad4b4e13eee4f36fac67a51e)':
     dependencies:
       '@yarnpkg/libzip': 2.3.0(patch_hash=ad6138c3ac1262662ff8a449177e8f03bf74f23011641b3c090a8c0849dbd8f0)
       tslib: 1.14.1

@@ -66,7 +66,11 @@ type CommentedStringValue = {
     comment: string[];
 };
 
-export type StringLookupMap = { [key: string]: string | CommentedStringValue | StringLookupMap };
+// scriptc: unions of record types collapse to a single arm at dynamic
+// boundaries, so `string | CommentedStringValue | StringLookupMap` coerces
+// every entry to `string` and {message, comment} values throw. `any`
+// keeps the dynamic shape intact (values are narrowed in getRawStringFromMap).
+export type StringLookupMap = { [key: string]: any };
 let localizedStrings: StringLookupMap | undefined = undefined;
 let defaultStrings: StringLookupMap = {};
 

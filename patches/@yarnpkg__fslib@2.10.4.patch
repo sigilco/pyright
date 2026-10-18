@@ -136,3 +136,310 @@ index bf6e35315a102bc9b8b8b73fefcfe51048ba2cce..337a8f1339406f2b5ae432949485dd3e
          return false;
      }
      isSymbolicLink() {
+diff --git a/lib/path.js b/lib/path.js
+index 1111111111111111111111111111111111111111..2222222222222222222222222222222222222222 100644
+--- a/lib/path.js
++++ b/lib/path.js
+@@ -26,7 +26,7 @@
+     pnpCjs: `.pnp.cjs`,
+     rc: `.yarnrc.yml`,
+ };
+-exports.npath = Object.create(path_1.default);
+-exports.ppath = Object.create(path_1.default.posix);
++exports.npath = Object.assign({}, path_1.default);
++exports.ppath = Object.assign({}, path_1.default.posix);
+ exports.npath.cwd = () => process.cwd();
+ exports.ppath.cwd = () => toPortablePath(process.cwd());
+diff --git a/lib/AliasFS.js b/lib/AliasFS.js
+--- a/lib/AliasFS.js
++++ b/lib/AliasFS.js
+@@ -15,9 +15,11 @@
+         return this.baseFs;
+     }
+     mapFromBase(p) {
++        void this;
+         return p;
+     }
+     mapToBase(p) {
++        void this;
+         return p;
+     }
+ }
+diff --git a/lib/CwdFS.js b/lib/CwdFS.js
+--- a/lib/CwdFS.js
++++ b/lib/CwdFS.js
+@@ -22,6 +22,7 @@
+         }
+     }
+     mapFromBase(path) {
++        void this;
+         return path;
+     }
+     mapToBase(path) {
+diff --git a/lib/LazyFS.js b/lib/LazyFS.js
+--- a/lib/LazyFS.js
++++ b/lib/LazyFS.js
+@@ -17,9 +17,11 @@
+         this.instance = value;
+     }
+     mapFromBase(p) {
++        void this;
+         return p;
+     }
+     mapToBase(p) {
++        void this;
+         return p;
+     }
+ }
+diff --git a/lib/NodeFS.js b/lib/NodeFS.js
+--- a/lib/NodeFS.js
++++ b/lib/NodeFS.js
+@@ -16,6 +16,7 @@
+         }
+     }
+     getExtractHint() {
++        void this;
+         return false;
+     }
+     getRealPath() {
+@@ -403,6 +404,7 @@
+         return this.realFs.unwatchFile(path_1.npath.fromPortablePath(p), cb);
+     }
+     makeCallback(resolve, reject) {
++        void this;
+         return (err, result) => {
+             if (err) {
+                 reject(err);
+diff --git a/lib/NodePathFS.js b/lib/NodePathFS.js
+--- a/lib/NodePathFS.js
++++ b/lib/NodePathFS.js
+@@ -20,6 +20,7 @@
+         this.baseFs = baseFs;
+     }
+     mapFromBase(path) {
++        void this;
+         return path;
+     }
+     mapToBase(path) {
+diff --git a/lib/VirtualFS.js b/lib/VirtualFS.js
+--- a/lib/VirtualFS.js
++++ b/lib/VirtualFS.js
+@@ -83,6 +83,7 @@
+         return path_1.ppath.relative(resolvedRoot, resolvedP) || path_1.PortablePath.dot;
+     }
+     mapFromBase(p) {
++        void this;
+         return p;
+     }
+ }
+diff --git a/lib/ZipFS.js b/lib/ZipFS.js
+--- a/lib/ZipFS.js
++++ b/lib/ZipFS.js
+@@ -805,12 +805,14 @@
+         return this.chownSync(p, uid, gid);
+     }
+     chownSync(p, uid, gid) {
++        void this;
+         throw new Error(`Unimplemented`);
+     }
+     async renamePromise(oldP, newP) {
+         return this.renameSync(oldP, newP);
+     }
+     renameSync(oldP, newP) {
++        void this;
+         throw new Error(`Unimplemented`);
+     }
+     async copyFilePromise(sourceP, destP, flags) {
+@@ -1147,6 +1149,7 @@
+         return this.truncateSync(this.fdToPath(fd, `ftruncateSync`), len);
+     }
+     watch(p, a, b) {
++        void this;
+         let persistent;
+         switch (typeof a) {
+             case `function`:
+diff --git a/lib/algorithms/opendir.js b/lib/algorithms/opendir.js
+--- a/lib/algorithms/opendir.js
++++ b/lib/algorithms/opendir.js
+@@ -11,6 +11,7 @@
+         this.closed = false;
+     }
+     throwIfClosed() {
++        void this;
+         if (this.closed) {
+             throw errors.ERR_DIR_CLOSED();
+         }
+@@ -28,24 +29,40 @@
+         }
+     }
+     read(cb) {
+-        const dirent = this.readSync();
++        void this;
++        if (this.closed) {
++            throw errors.ERR_DIR_CLOSED();
++        }
++        const dirent = this.nextDirent();
+         if (typeof cb !== `undefined`)
+             return cb(null, dirent);
+         return Promise.resolve(dirent);
+     }
+     readSync() {
+-        this.throwIfClosed();
++        void this;
++        if (this.closed) {
++            throw errors.ERR_DIR_CLOSED();
++        }
+         return this.nextDirent();
+     }
+     close(cb) {
+-        this.closeSync();
++        void this;
++        var _a2, _b2;
++        if (this.closed) {
++            throw errors.ERR_DIR_CLOSED();
++        }
++        (_b2 = (_a2 = this.opts).onClose) === null || _b2 === void 0 ? void 0 : _b2.call(_a2);
++        this.closed = true;
+         if (typeof cb !== `undefined`)
+             return cb(null);
+         return Promise.resolve();
+     }
+     closeSync() {
++        void this;
+         var _a, _b;
+-        this.throwIfClosed();
++        if (this.closed) {
++            throw errors.ERR_DIR_CLOSED();
++        }
+         (_b = (_a = this.opts).onClose) === null || _b === void 0 ? void 0 : _b.call(_a);
+         this.closed = true;
+     }
+diff --git a/lib/algorithms/watchFile/CustomStatWatcher.js b/lib/algorithms/watchFile/CustomStatWatcher.js
+--- a/lib/algorithms/watchFile/CustomStatWatcher.js
++++ b/lib/algorithms/watchFile/CustomStatWatcher.js
+@@ -21,119 +21,12 @@
+     }
+ }
+ exports.assertStatus = assertStatus;
+-class CustomStatWatcher extends events_1.EventEmitter {
+-    static create(fakeFs, path, opts) {
+-        const statWatcher = new CustomStatWatcher(fakeFs, path, opts);
+-        statWatcher.start();
+-        return statWatcher;
++var CustomStatWatcher = class {
++    static create() {
++        throw new Error(`CustomStatWatcher: file watching is not supported in the scriptc native build`);
+     }
+-    constructor(fakeFs, path, { bigint = false } = {}) {
+-        super();
+-        this.status = Status.Ready;
+-        this.changeListeners = new Map();
+-        this.startTimeout = null;
+-        this.fakeFs = fakeFs;
+-        this.path = path;
+-        this.bigint = bigint;
+-        this.lastStats = this.stat();
++    constructor() {
++        throw new Error(`CustomStatWatcher: file watching is not supported in the scriptc native build`);
+     }
+-    start() {
+-        assertStatus(this.status, Status.Ready);
+-        this.status = Status.Running;
+-        // Node allows other listeners to be registered up to 3 milliseconds
+-        // after the watcher has been started, so that's what we're doing too
+-        this.startTimeout = setTimeout(() => {
+-            this.startTimeout = null;
+-            // Per the Node FS docs:
+-            // "When an fs.watchFile operation results in an ENOENT error,
+-            // it will invoke the listener once, with all the fields zeroed
+-            // (or, for dates, the Unix Epoch)."
+-            if (!this.fakeFs.existsSync(this.path)) {
+-                this.emit(Event.Change, this.lastStats, this.lastStats);
+-            }
+-        }, 3);
+-    }
+-    stop() {
+-        assertStatus(this.status, Status.Running);
+-        this.status = Status.Stopped;
+-        if (this.startTimeout !== null) {
+-            clearTimeout(this.startTimeout);
+-            this.startTimeout = null;
+-        }
+-        this.emit(Event.Stop);
+-    }
+-    stat() {
+-        try {
+-            return this.fakeFs.statSync(this.path, { bigint: this.bigint });
+-        }
+-        catch (error) {
+-            // From observation, all errors seem to be mostly ignored by Node.
+-            // Checked with ENOENT, ENOTDIR, EPERM
+-            const statInstance = this.bigint
+-                ? new statUtils.BigIntStatsEntry()
+-                : new statUtils.StatEntry();
+-            return statUtils.clearStats(statInstance);
+-        }
+-    }
+-    /**
+-     * Creates an interval whose callback compares the current stats with the previous stats and notifies all listeners in case of changes.
+-     *
+-     * @param opts.persistent Decides whether the interval should be immediately unref-ed.
+-     */
+-    makeInterval(opts) {
+-        const interval = setInterval(() => {
+-            const currentStats = this.stat();
+-            const previousStats = this.lastStats;
+-            if (statUtils.areStatsEqual(currentStats, previousStats))
+-                return;
+-            this.lastStats = currentStats;
+-            this.emit(Event.Change, currentStats, previousStats);
+-        }, opts.interval);
+-        return opts.persistent ? interval : interval.unref();
+-    }
+-    /**
+-     * Registers a listener and assigns it an interval.
+-     */
+-    registerChangeListener(listener, opts) {
+-        this.addListener(Event.Change, listener);
+-        this.changeListeners.set(listener, this.makeInterval(opts));
+-    }
+-    /**
+-     * Unregisters the listener and clears the assigned interval.
+-     */
+-    unregisterChangeListener(listener) {
+-        this.removeListener(Event.Change, listener);
+-        const interval = this.changeListeners.get(listener);
+-        if (typeof interval !== `undefined`)
+-            clearInterval(interval);
+-        this.changeListeners.delete(listener);
+-    }
+-    /**
+-     * Unregisters all listeners and clears all assigned intervals.
+-     */
+-    unregisterAllChangeListeners() {
+-        for (const listener of this.changeListeners.keys()) {
+-            this.unregisterChangeListener(listener);
+-        }
+-    }
+-    hasChangeListeners() {
+-        return this.changeListeners.size > 0;
+-    }
+-    /**
+-     * Refs all stored intervals.
+-     */
+-    ref() {
+-        for (const interval of this.changeListeners.values())
+-            interval.ref();
+-        return this;
+-    }
+-    /**
+-     * Unrefs all stored intervals.
+-     */
+-    unref() {
+-        for (const interval of this.changeListeners.values())
+-            interval.unref();
+-        return this;
+-    }
+-}
++};
+ exports.CustomStatWatcher = CustomStatWatcher;
