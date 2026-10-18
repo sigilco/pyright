@@ -173,12 +173,19 @@ export function getLocaleFromEnv(): string {
 }
 
 function loadDefaultStrings(): StringLookupMap {
-    const defaultStrings = stringMapsByLocale.get(defaultLocale);
+    const defaultStrings = getStringsForLocale(stringMapsByLocale, defaultLocale);
     if (defaultStrings) {
         return defaultStrings;
     }
     console.error('Could not load default strings');
     return {};
+}
+
+function getStringsForLocale(
+    localeMap: Map<string, StringLookupMap>,
+    locale: string
+): StringLookupMap | undefined {
+    return localeMap.get(locale);
 }
 
 export function loadStringsForLocale(locale: string, localeMap: Map<string, StringLookupMap>): StringLookupMap {
