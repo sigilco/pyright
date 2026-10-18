@@ -20,7 +20,8 @@
         "build": "rspack build -c rspack.config.js --mode production",
         "clean": "shx rm -rf ./dist ./out README.md LICENSE.txt",
         "prepack": "pnpm run clean && shx cp ../../README.md . && shx cp ../../LICENSE.txt . && pnpm run build",
-        "webpack": "rspack build -c rspack.config.js --mode development"
+        "webpack": "rspack build -c rspack.config.js --mode development",
+        "webpack:cli": "rspack build -c rspack.cli.config.js --mode production"
     },
     "optionalDependencies": {
         "fsevents": "~2.3.3"
