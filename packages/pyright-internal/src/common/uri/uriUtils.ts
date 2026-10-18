@@ -171,6 +171,11 @@ export function tryStat(fs: ReadOnlyFileSystem, uri: Uri): Stats | undefined {
             return fs.statSync(uri);
         }
     } catch (e: any) {
+        // scriptc: surface the swallowed error — native builds need the
+        // underlying fault to locate Uri leaks into the fs seam.
+        const u: any = uri;
+        const udesc = typeof u._filePath === 'string' ? u._filePath : `non-uri:${typeof u}`;
+        console.error(`tryStat(${udesc}): ${(e && e.message) || e}`);
         return undefined;
     }
     return undefined;

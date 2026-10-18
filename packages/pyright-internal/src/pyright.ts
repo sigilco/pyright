@@ -324,7 +324,7 @@ async function processArgs(): Promise<ExitStatus> {
             try {
                 const stat = tryStat(tempFileSystem, includeSpec.wildcardRoot);
                 if (!stat) {
-                    console.error(`File or directory "${includeSpec.wildcardRoot}" does not exist`);
+                    console.error(`File or directory "${includeSpec.wildcardRoot.toUserVisibleString()}" does not exist`);
                     return ExitStatus.ParameterError;
                 }
             } catch {
