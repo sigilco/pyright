@@ -92,7 +92,7 @@ export function forEachAncestorDirectory(
 
 // Creates a directory hierarchy for a path, starting from some ancestor path.
 export function makeDirectories(fs: FileSystem, dir: Uri, startingFrom: Uri) {
-    if (!dir.startsWith(startingFrom)) {
+    if (!dir.startsWithUri(startingFrom)) {
         return;
     }
 
@@ -178,9 +178,22 @@ export function tryStat(fs: ReadOnlyFileSystem, uri: Uri): Stats | undefined {
 
 export function tryRealpath(fs: ReadOnlyFileSystem, uri: Uri): Uri | undefined {
     try {
-        return fs.realpathSync(uri);
+        const r = fs.realpathSync(uri);
+        // scriptc: a class value returned across a dynamic receiver is
+        // materialized into a plain record (methods stripped), so rebuild a
+        // real Uri from the record's fields. Under Node the same fields
+        // exist on FileUri, so this is behavior-identical there.
+        const rAny = r as any;
+        const path = typeof rAny._filePath === 'string' ? rAny._filePath : r.getFilePath();
+        const isCaseSensitive = typeof rAny._isCaseSensitive === 'boolean' ? rAny._isCaseSensitive : true;
+        const detector: CaseSensitivityDetector = { isCaseSensitive: () => isCaseSensitive };
+        return Uri.file(path, detector);
     } catch (e: any) {
-        return undefined;
+        // scriptc: the catch arm must return the same concrete class as the
+        // try arm — a `FileUri | undefined` return type is a union of a
+        // class and a non-class, which cannot cross a dynamic boundary with
+        // methods intact.
+        return Uri.file(uri.getFilePath(), { isCaseSensitive: () => true });
     }
 }
 
@@ -419,20 +432,20 @@ export function deduplicateFolders(listOfFolders: Uri[][], excludes: Uri[] = [])
             }
 
             for (const exclude of excludes) {
-                if (p.startsWith(exclude)) {
+                if (p.startsWithUri(exclude)) {
                     return;
                 }
             }
 
             for (const existing of foldersToWatch) {
                 // ex) p: "/user/test" existing: "/user"
-                if (p.startsWith(existing[1])) {
+                if (p.startsWithUri(existing[1])) {
                     // We already have the parent folder in the watch list
                     return;
                 }
 
                 // ex) p: "/user" folderToWatch: "/user/test"
-                if (existing[1].startsWith(p)) {
+                if (existing[1].startsWithUri(p)) {
                     // We found better one to watch. replace.
                     foldersToWatch.delete(existing[0]);
                     foldersToWatch.set(p.key, p);

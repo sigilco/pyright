@@ -210,7 +210,7 @@ export class SourceEnumerator {
         this._seenDirs.set(realDirPath.key, realDirPath);
         if (
             this._includeRoots.length > 0 &&
-            !this._includeRoots.some((root) => realDirPath.startsWith(root)) &&
+            !this._includeRoots.some((root) => realDirPath.startsWithUri(root)) &&
             broadensTraversal
         ) {
             return;

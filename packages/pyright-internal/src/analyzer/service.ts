@@ -1582,7 +1582,7 @@ export class AnalyzerService {
         }
 
         const hasInit =
-            parentPath.startsWith(this._configOptions.projectRoot) &&
+            parentPath.startsWithUri(this._configOptions.projectRoot) &&
             (this.fs.existsSync(parentPath.initPyUri) || this.fs.existsSync(parentPath.initPyiUri));
 
         // A newly-added symlink can make a previously unresolved import resolvable even when the program doesn't
@@ -1609,12 +1609,12 @@ export class AnalyzerService {
             // If the directory containing the marker isn't already a workspace package folder (or doesn't contain
             // any tracked source files), it can't affect import resolution or type evaluation.
             const hasInit =
-                parentPath.startsWith(configOptions.projectRoot) &&
+                parentPath.startsWithUri(configOptions.projectRoot) &&
                 (fs.existsSync(parentPath.initPyUri) || fs.existsSync(parentPath.initPyiUri));
 
             const hasPythonSourceFileInParent = program
                 .getSourceFileInfoList()
-                .some((fileInfo) => hasPythonExtension(fileInfo.uri) && fileInfo.uri.startsWith(parentPath));
+                .some((fileInfo) => hasPythonExtension(fileInfo.uri) && fileInfo.uri.startsWithUri(parentPath));
 
             return hasInit || hasPythonSourceFileInParent;
         }

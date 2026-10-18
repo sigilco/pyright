@@ -9,21 +9,21 @@
 
 import { fail } from '../common/debug';
 
-import * as csStrings from './package.nls.cs.json';
-import * as deStrings from './package.nls.de.json';
-import * as enUsStrings from './package.nls.en-us.json';
-import * as esStrings from './package.nls.es.json';
-import * as frStrings from './package.nls.fr.json';
-import * as itStrings from './package.nls.it.json';
-import * as jaStrings from './package.nls.ja.json';
-import * as koStrings from './package.nls.ko.json';
-import * as plStrings from './package.nls.pl.json';
-import * as ptBrStrings from './package.nls.pt-br.json';
-import * as qpsPlocStrings from './package.nls.qps-ploc.json';
-import * as ruStrings from './package.nls.ru.json';
-import * as trStrings from './package.nls.tr.json';
-import * as zhCnStrings from './package.nls.zh-cn.json';
-import * as zhTwStrings from './package.nls.zh-tw.json';
+import csStrings from './package.nls.cs.json';
+import deStrings from './package.nls.de.json';
+import enUsStrings from './package.nls.en-us.json';
+import esStrings from './package.nls.es.json';
+import frStrings from './package.nls.fr.json';
+import itStrings from './package.nls.it.json';
+import jaStrings from './package.nls.ja.json';
+import koStrings from './package.nls.ko.json';
+import plStrings from './package.nls.pl.json';
+import ptBrStrings from './package.nls.pt-br.json';
+import qpsPlocStrings from './package.nls.qps-ploc.json';
+import ruStrings from './package.nls.ru.json';
+import trStrings from './package.nls.tr.json';
+import zhCnStrings from './package.nls.zh-cn.json';
+import zhTwStrings from './package.nls.zh-tw.json';
 
 export class ParameterizedString<T extends {}> {
     constructor(private _formatString: string) {}

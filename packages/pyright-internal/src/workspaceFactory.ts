@@ -210,7 +210,7 @@ export class WorkspaceFactory implements IWorkspaceFactory {
 
     getContainingWorkspace(filePath: Uri, pythonPath?: Uri): NormalWorkspace | undefined {
         return this._getBestRegularWorkspace(
-            this.getNonDefaultWorkspaces(WellKnownWorkspaceKinds.Regular).filter((w) => filePath.startsWith(w.rootUri))
+            this.getNonDefaultWorkspaces(WellKnownWorkspaceKinds.Regular).filter((w) => filePath.startsWithUri(w.rootUri))
         );
     }
 

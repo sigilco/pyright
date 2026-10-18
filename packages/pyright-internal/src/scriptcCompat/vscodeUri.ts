@@ -483,23 +483,22 @@ function percentDecode(str: string): string {
 
 // --- Utils (ported from lib/umd/utils.js) ---
 
-const posixPath = nodePath.posix;
 const slash = '/';
 
 // Object literal rather than a namespace: scriptc refuses the class-value
 // static assignments that namespace merging emits.
 function joinPath(uri: URI, ...paths: string[]): URI {
-    return uri.with({ path: posixPath.join(uri.path, ...paths) });
+    return uri.with({ path: nodePath.join(uri.path, ...paths) });
 }
 
 function resolvePath(uri: URI, ...paths: string[]): URI {
     let path = uri.path;
     let slashAdded = false;
     if (path[0] !== slash) {
-        path = slash + path; // for posixPath.resolve the first segment has to be absolute or cwd is used.
+        path = slash + path; // for nodePath.resolve the first segment has to be absolute or cwd is used.
         slashAdded = true;
     }
-    let resolvedPath = posixPath.resolve(path, ...paths);
+    let resolvedPath = nodePath.resolve(path, ...paths);
     if (slashAdded && resolvedPath[0] === slash && !uri.authority) {
         resolvedPath = resolvedPath.substring(1);
     }
@@ -510,7 +509,7 @@ function dirname(uri: URI): URI {
     if (uri.path.length === 0 || uri.path === slash) {
         return uri;
     }
-    let path = posixPath.dirname(uri.path);
+    let path = nodePath.dirname(uri.path);
     if (path.length === 1 && path.charCodeAt(0) === 46 /* CharCode.Period */) {
         path = '';
     }
@@ -518,11 +517,11 @@ function dirname(uri: URI): URI {
 }
 
 function basename(uri: URI): string {
-    return posixPath.basename(uri.path);
+    return nodePath.basename(uri.path);
 }
 
 function extname(uri: URI): string {
-    return posixPath.extname(uri.path);
+    return nodePath.extname(uri.path);
 }
 
 export const Utils = {

@@ -15,7 +15,7 @@ import { Disposable } from 'vscode-jsonrpc';
 import { CaseSensitivityDetector } from './caseSensitivityDetector';
 import { ConsoleInterface, NullConsole } from './console';
 import { randomBytesHex } from './crypto';
-import { FileSystem, MkDirOptions, TempFile, TmpfileOptions, VirtualDirent } from './fileSystem';
+import { FileSystem, MkDirOptions, TempFile, TmpfileOptions } from './fileSystem';
 import {
     FileWatcher,
     FileWatcherEventHandler,
@@ -87,6 +87,190 @@ const zipMagic = [
     Buffer.from([0x50, 0x4b, 0x05, 0x06]),
     Buffer.from([0x50, 0x4b, 0x07, 0x08]),
 ];
+
+// scriptc note: the object literal upstream returned here carried method
+// values; under scriptc that unrepresentable union member made the whole
+// statSync return type unboxable (SC2020). statSync must also return ONE
+// concrete class from every branch — a union of two class types cannot
+// cross the dynamic dispatch boundary — so yarnFS results are wrapped into
+// this same class too. Predicates must be real methods: reading a
+// function-valued field off a class value that crossed a dynamic boundary
+// materializes its class view and throws
+// "class fields cannot be represented as checked-dynamic properties".
+class EmptyStats {
+    private _isFile = false;
+    private _isDirectory = false;
+    private _isBlockDevice = false;
+    private _isCharacterDevice = false;
+    private _isSymbolicLink = false;
+    private _isFIFO = false;
+    private _isSocket = false;
+    private _isZipDirectory = false;
+    isFile() {
+        return this._isFile;
+    }
+    isDirectory() {
+        return this._isDirectory;
+    }
+    isBlockDevice() {
+        return this._isBlockDevice;
+    }
+    isCharacterDevice() {
+        return this._isCharacterDevice;
+    }
+    isSymbolicLink() {
+        return this._isSymbolicLink;
+    }
+    isFIFO() {
+        return this._isFIFO;
+    }
+    isSocket() {
+        return this._isSocket;
+    }
+    isZipDirectory() {
+        return this._isZipDirectory;
+    }
+    setPredicates(
+        isFile: boolean,
+        isDirectory: boolean,
+        isBlockDevice: boolean,
+        isCharacterDevice: boolean,
+        isSymbolicLink: boolean,
+        isFIFO: boolean,
+        isSocket: boolean,
+        isZipDirectory: boolean
+    ) {
+        this._isFile = isFile;
+        this._isDirectory = isDirectory;
+        this._isBlockDevice = isBlockDevice;
+        this._isCharacterDevice = isCharacterDevice;
+        this._isSymbolicLink = isSymbolicLink;
+        this._isFIFO = isFIFO;
+        this._isSocket = isSocket;
+        this._isZipDirectory = isZipDirectory;
+    }
+    dev = 0;
+    atimeMs = 0;
+    mtimeMs = 0;
+    ctimeMs = 0;
+    birthtimeMs = 0;
+    size = 0;
+    blksize = 0;
+    blocks = 0;
+    ino = 0;
+    mode = 0;
+    nlink = 0;
+    uid = 0;
+    gid = 0;
+    rdev = 0;
+    atime = new Date(0);
+    mtime = new Date(0);
+    ctime = new Date(0);
+    birthtime = new Date(0);
+}
+
+// scriptc: wraps any stat result (native fs.Stats or shim ScrStats) into the
+// single concrete class statSync returns.
+function wrapStats(stat: fs.Stats): EmptyStats {
+    const s = new EmptyStats();
+    s.setPredicates(
+        stat.isFile(),
+        stat.isDirectory(),
+        stat.isBlockDevice(),
+        stat.isCharacterDevice(),
+        stat.isSymbolicLink(),
+        stat.isFIFO(),
+        stat.isSocket(),
+        false
+    );
+    s.dev = stat.dev;
+    s.ino = stat.ino;
+    s.mode = stat.mode;
+    s.nlink = stat.nlink;
+    s.uid = stat.uid;
+    s.gid = stat.gid;
+    s.rdev = stat.rdev;
+    s.size = stat.size;
+    s.blksize = stat.blksize;
+    s.blocks = stat.blocks;
+    s.atimeMs = stat.atimeMs;
+    s.mtimeMs = stat.mtimeMs;
+    s.ctimeMs = stat.ctimeMs;
+    s.birthtimeMs = stat.birthtimeMs;
+    // scriptc: copying a builtin Date out of a class field and into another
+    // class throws — nothing in pyright reads the Date fields (only *Ms),
+    // so they stay at the epoch defaults.
+    return s;
+}
+
+// scriptc: same single-class rule for dirents — every element of
+// readdirEntriesSync must be this class, not a union of Dirent impls.
+// Predicates are real methods for the same classview reason as EmptyStats.
+class DirentEntry {
+    name = '';
+    parentPath = '';
+    private _isFile = false;
+    private _isDirectory = false;
+    private _isBlockDevice = false;
+    private _isCharacterDevice = false;
+    private _isSymbolicLink = false;
+    private _isFIFO = false;
+    private _isSocket = false;
+    isFile() {
+        return this._isFile;
+    }
+    isDirectory() {
+        return this._isDirectory;
+    }
+    isBlockDevice() {
+        return this._isBlockDevice;
+    }
+    isCharacterDevice() {
+        return this._isCharacterDevice;
+    }
+    isSymbolicLink() {
+        return this._isSymbolicLink;
+    }
+    isFIFO() {
+        return this._isFIFO;
+    }
+    isSocket() {
+        return this._isSocket;
+    }
+    setPredicates(
+        isFile: boolean,
+        isDirectory: boolean,
+        isBlockDevice: boolean,
+        isCharacterDevice: boolean,
+        isSymbolicLink: boolean,
+        isFIFO: boolean,
+        isSocket: boolean
+    ) {
+        this._isFile = isFile;
+        this._isDirectory = isDirectory;
+        this._isBlockDevice = isBlockDevice;
+        this._isCharacterDevice = isCharacterDevice;
+        this._isSymbolicLink = isSymbolicLink;
+        this._isFIFO = isFIFO;
+        this._isSocket = isSocket;
+    }
+}
+
+function wrapDirentEntry(entry: fs.Dirent): DirentEntry {
+    const d = new DirentEntry();
+    d.name = entry.name;
+    d.parentPath = entry.parentPath;
+    d.setPredicates(
+        entry.isFile(),
+        entry.isDirectory(),
+        entry.isBlockDevice(),
+        entry.isCharacterDevice(),
+        entry.isSymbolicLink(),
+        entry.isFIFO(),
+        entry.isSocket()
+    );
+    return d;
+}
 
 function hasZipMagic(fs: FakeFS<PortablePath>, p: PortablePath): boolean {
     let fd: number | undefined;
@@ -265,14 +449,16 @@ export class RealFileSystem implements FileSystem {
     readdirEntriesSync(uri: Uri): fs.Dirent[] {
         const path = uri.getFilePath();
         return yarnFS.readdirSync(path, { withFileTypes: true }).map((entry): fs.Dirent => {
+            const wrapped = wrapDirentEntry(entry);
             // Treat zip/egg files as directories.
             // See: https://github.com/yarnpkg/berry/blob/master/packages/vscode-zipfs/sources/ZipFSProvider.ts
             if (hasZipExtension(entry.name)) {
                 if (entry.isFile() && yarnFS.isZip(path)) {
-                    return new VirtualDirent(entry.name, /* file */ false, path);
+                    wrapped.setPredicates(false, true, false, false, false, false, false);
+                    wrapped.parentPath = path;
                 }
             }
-            return entry;
+            return wrapped;
         });
     }
 
@@ -307,46 +493,20 @@ export class RealFileSystem implements FileSystem {
     statSync(uri: Uri): fs.Stats {
         if (FileUri.isFileUri(uri)) {
             const path = uri.getFilePath();
-            const stat = yarnFS.statSync(path);
+            const stat = wrapStats(yarnFS.statSync(path));
             // Treat zip/egg files as directories.
             // See: https://github.com/yarnpkg/berry/blob/master/packages/vscode-zipfs/sources/ZipFSProvider.ts
             if (hasZipExtension(path)) {
                 if (stat.isFile() && yarnFS.isZip(path)) {
-                    stat.isFile = () => false;
-                    stat.isDirectory = () => true;
-                    (stat as any).isZipDirectory = () => true;
+                    stat.setPredicates(false, true, false, false, false, false, false, true);
                     return stat;
                 }
             }
             return stat;
         } else {
-            return {
-                isFile: () => false,
-                isDirectory: () => false,
-                isBlockDevice: () => false,
-                isCharacterDevice: () => false,
-                isSymbolicLink: () => false,
-                isFIFO: () => false,
-                isSocket: () => false,
-                dev: 0,
-                atimeMs: 0,
-                mtimeMs: 0,
-                ctimeMs: 0,
-                birthtimeMs: 0,
-                size: 0,
-                blksize: 0,
-                blocks: 0,
-                ino: 0,
-                mode: 0,
-                nlink: 0,
-                uid: 0,
-                gid: 0,
-                rdev: 0,
-                atime: new Date(),
-                mtime: new Date(),
-                ctime: new Date(),
-                birthtime: new Date(),
-            };
+            // scriptc: a function-bearing record cannot cross the dynamic
+            // dispatch boundary; a class instance can.
+            return new EmptyStats();
         }
     }
 
@@ -508,7 +668,7 @@ export class WorkspaceFileWatcherProvider implements FileWatcherProvider, FileWa
         // for a file change. It is event handler's job to filter those out.
         this._fileWatchers.forEach((watcher) => {
             const dirUris = watcher.workspacePaths.map((d) => UriEx.file(d, fileUri.isCaseSensitive));
-            if (dirUris.some((dir) => fileUri.startsWith(dir))) {
+            if (dirUris.some((dir) => fileUri.startsWithUri(dir))) {
                 watcher.eventHandler(eventType, fileUri.getFilePath());
             }
         });

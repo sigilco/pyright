@@ -28,8 +28,14 @@ export function assert(
 export function fail(message?: string, stackCrawlMark?: AnyFunction): never {
     // debugger;
     const e = new Error(message ? `Debug Failure. ${message}` : 'Debug Failure.');
-    if (Error.captureStackTrace) {
-        Error.captureStackTrace(e, stackCrawlMark || fail);
+    try {
+        // scriptc: Error.captureStackTrace is typed but has no scriptc
+        // lowering, so calling it throws — keep it best-effort.
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(e, stackCrawlMark || fail);
+        }
+    } catch {
+        // Ignore.
     }
     throw e;
 }

@@ -214,7 +214,7 @@ export class Program {
         this._createNewEvaluator();
 
         this._id = id ?? `Prog_${Program._nextId}`;
-        Program._nextId += 1;
+        Program._nextId = Program._nextId + 1;
     }
 
     get id() {
@@ -720,7 +720,7 @@ export class Program {
 
     containsSourceFileIn(folder: Uri): boolean {
         for (const normalizedSourceFilePath of this._sourceFileMap.values()) {
-            if (normalizedSourceFilePath.uri.startsWith(folder)) {
+            if (normalizedSourceFilePath.uri.startsWithUri(folder)) {
                 return true;
             }
         }

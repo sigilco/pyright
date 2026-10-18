@@ -91,7 +91,7 @@ export class ConstantUri extends BaseUri {
         return false;
     }
 
-    override startsWith(other: Uri | undefined, ignoreCase?: boolean | undefined): boolean {
+    override startsWithUri(other: Uri | undefined, ignoreCase?: boolean | undefined): boolean {
         return false;
     }
 

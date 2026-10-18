@@ -145,7 +145,7 @@ export abstract class BaseUri implements Uri {
         return this.key === other?.key;
     }
 
-    abstract startsWith(other: Uri | undefined, ignoreCase?: boolean): boolean;
+    abstract startsWithUri(other: Uri | undefined, ignoreCase?: boolean): boolean;
 
     pathStartsWith(name: string): boolean {
         // We're making an assumption here that the name is already normalized.

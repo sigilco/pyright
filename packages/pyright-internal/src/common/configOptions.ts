@@ -1152,7 +1152,7 @@ export class ConfigOptions {
         return (
             this.executionEnvironments.find((env) => {
                 const envRoot = Uri.is(env.root) ? env.root : this.projectRoot.resolvePaths(env.root || '');
-                return file.startsWith(envRoot);
+                return file.startsWithUri(envRoot);
             }) ?? this.getDefaultExecEnvironment()
         );
     }

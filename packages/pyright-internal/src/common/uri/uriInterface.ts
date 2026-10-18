@@ -62,7 +62,7 @@ export interface Uri {
     isUntitled(): boolean;
     equals(other: Uri | undefined): boolean;
     // Returns true if the `other` is the parent of `this`. Meaning `other` is a prefix of `this`.
-    startsWith(other: Uri | undefined): boolean;
+    startsWithUri(other: Uri | undefined): boolean;
     pathStartsWith(name: string): boolean;
     pathEndsWith(name: string): boolean;
     pathIncludes(include: string): boolean;

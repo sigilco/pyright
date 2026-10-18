@@ -143,14 +143,14 @@ export class WebUri extends BaseUri {
             return false;
         }
 
-        return parent._path.length < this._path.length && this.startsWith(parent);
+        return parent._path.length < this._path.length && this.startsWithUri(parent);
     }
 
     override isLocal(): boolean {
         return false;
     }
 
-    override startsWith(other: Uri | undefined): boolean {
+    override startsWithUri(other: Uri | undefined): boolean {
         if (other?.scheme !== this.scheme) {
             return false;
         }

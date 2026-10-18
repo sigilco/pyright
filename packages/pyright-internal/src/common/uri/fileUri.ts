@@ -152,14 +152,14 @@ export class FileUri extends BaseUri {
             return false;
         }
 
-        return parent._filePath.length < this._filePath.length && this.startsWith(parent);
+        return parent._filePath.length < this._filePath.length && this.startsWithUri(parent);
     }
 
     override isLocal(): boolean {
         return true;
     }
 
-    override startsWith(other: Uri | undefined): boolean {
+    override startsWithUri(other: Uri | undefined): boolean {
         if (other?.scheme !== this.scheme) {
             return false;
         }

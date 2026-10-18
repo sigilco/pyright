@@ -2589,7 +2589,7 @@ function _getModuleNameInfoFromPath(
     fileUri: Uri,
     stripTopContainerDir = false
 ): ModuleNameInfoFromPath | undefined {
-    if (!fileUri.startsWith(containerPath)) {
+    if (!fileUri.startsWithUri(containerPath)) {
         return undefined;
     }
 
