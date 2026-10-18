@@ -9,13 +9,13 @@
 //
 // <probe> is a probe name (scripts/probes/<name>.js) or a path to a .js/.ts file.
 //
-// Toolchain:
-//   SCRIPTC_CLI   repo cli main.js (default ~/repos/scriptc/packages/cli/dist/main.js).
-//                 Used for the default .o compile — this is the fence surface.
-//   SCRIPTC       native scriptc binary for --run linking (default: `scriptc` on PATH).
-//                 The workspace compiler is often ahead of the published runtime
-//                 pack, so repo-CLI exe links can fail on missing scr_* symbols;
-//                 point SCRIPTC at the released npm binary for end-to-end runs.
+// Toolchain (npm-only, see docs/iteration-guide.md):
+//   SCRIPTC       scriptc binary used for BOTH .o compiles and --run linking
+//                 (default: `scriptc` on PATH — the published npm binary).
+//   SCRIPTC_CLI   opt-in override: path to a workspace cli main.js invoked via
+//                 node for the default .o compile. Only for compiler development;
+//                 workspace↔published runtime-pack skew breaks exe links, so the
+//                 released npm binary is the default everywhere.
 //
 // A probe file may contain `// probe-expect: diverge` — then --run success is
 // reported as XPASS (fix landed, update the probe) and divergence as XFAIL.
@@ -23,7 +23,6 @@
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,18 +44,17 @@ function probePath(name) {
 const DIAG_RE = /error (SC\d+): (.*)/;
 
 function repoCli() {
-    return [
-        process.execPath,
-        process.env.SCRIPTC_CLI ?? join(homedir(), 'repos/scriptc/packages/cli/dist/main.js'),
-    ];
+    if (process.env.SCRIPTC_CLI)
+        return [process.execPath, process.env.SCRIPTC_CLI];
+    return [process.env.SCRIPTC ?? 'scriptc'];
 }
 
 function buildObj(file, outDir) {
-    const [cmd, cli] = repoCli();
+    const [cmd, ...cli] = repoCli();
     const out = join(outDir, `${basename(file, extname(file))}.o`);
     return {
         out,
-        r: spawnSync(cmd, [cli, 'build', file, '--emit', 'obj', '-o', out], {
+        r: spawnSync(cmd, [...cli, 'build', file, '--emit', 'obj', '-o', out], {
             encoding: 'utf8',
             maxBuffer: 64 * 1024 * 1024,
         }),

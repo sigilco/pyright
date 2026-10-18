@@ -33,12 +33,13 @@ export const ppath = Object.assign({}, path.posix, { root: '/' });
 const ZIP_UNAVAILABLE = 'scriptc-native build: zip archive support is not available';
 
 /*
- * scriptc: native fs.Stats/fs.Dirent handles cannot cross a class-method
- * boundary (converting typed values to 'unknown' -> SC1101). Every fs
- * result is therefore wrapped into these concrete program classes at the
- * point it leaves node:fs; predicates are eagerly copied into bools and
- * exposed as real methods (function-valued fields cannot materialize
- * across a dynamic boundary either).
+ * scriptc: native fs.Stats/fs.Dirent handles cannot cross ANY call
+ * boundary — passing one into a constructor/function converts typed
+ * values to 'unknown' (SC1101) at runtime. Every fs result is therefore
+ * unwrapped inline in the same method that calls node:fs into these
+ * concrete program classes; predicates are eagerly copied into bools
+ * and exposed as real methods (function-valued fields cannot
+ * materialize across a dynamic boundary either).
  */
 export class ScrStats {
     private _isFile = false;
@@ -63,34 +64,6 @@ export class ScrStats {
     mtimeMs = 0;
     ctimeMs = 0;
     birthtimeMs = 0;
-    constructor(stat?: fs.Stats) {
-        if (stat) {
-            this.setFromNative(stat);
-        }
-    }
-    setFromNative(stat: fs.Stats): void {
-        this._isFile = stat.isFile();
-        this._isDirectory = stat.isDirectory();
-        this._isBlockDevice = stat.isBlockDevice();
-        this._isCharacterDevice = stat.isCharacterDevice();
-        this._isSymbolicLink = stat.isSymbolicLink();
-        this._isFIFO = stat.isFIFO();
-        this._isSocket = stat.isSocket();
-        this.dev = stat.dev;
-        this.ino = stat.ino;
-        this.mode = stat.mode;
-        this.nlink = stat.nlink;
-        this.uid = stat.uid;
-        this.gid = stat.gid;
-        this.rdev = stat.rdev;
-        this.size = stat.size;
-        this.blksize = stat.blksize;
-        this.blocks = stat.blocks;
-        this.atimeMs = stat.atimeMs;
-        this.mtimeMs = stat.mtimeMs;
-        this.ctimeMs = stat.ctimeMs;
-        this.birthtimeMs = stat.birthtimeMs;
-    }
     isFile() {
         return this._isFile;
     }
@@ -146,17 +119,22 @@ export class ScrDirent {
     private _isSymbolicLink = false;
     private _isFIFO = false;
     private _isSocket = false;
-    constructor(dirent?: fs.Dirent) {
-        if (dirent) {
-            this.name = dirent.name;
-            this._isFile = dirent.isFile();
-            this._isDirectory = dirent.isDirectory();
-            this._isBlockDevice = dirent.isBlockDevice();
-            this._isCharacterDevice = dirent.isCharacterDevice();
-            this._isSymbolicLink = dirent.isSymbolicLink();
-            this._isFIFO = dirent.isFIFO();
-            this._isSocket = dirent.isSocket();
-        }
+    setPredicates(
+        isFile: boolean,
+        isDirectory: boolean,
+        isBlockDevice: boolean,
+        isCharacterDevice: boolean,
+        isSymbolicLink: boolean,
+        isFIFO: boolean,
+        isSocket: boolean
+    ): void {
+        this._isFile = isFile;
+        this._isDirectory = isDirectory;
+        this._isBlockDevice = isBlockDevice;
+        this._isCharacterDevice = isCharacterDevice;
+        this._isSymbolicLink = isSymbolicLink;
+        this._isFIFO = isFIFO;
+        this._isSocket = isSocket;
     }
     isFile() {
         return this._isFile;
@@ -195,11 +173,46 @@ export class FakeFS {
     }
 
     statSync(p: string): ScrStats {
-        return this.delegate ? this.delegate.statSync(p) : new ScrStats(fs.statSync(p));
+        return this.delegate ? this.delegate.statSync(p) : this.statSyncImpl(p, false);
     }
 
     lstatSync(p: string): ScrStats {
-        return this.delegate ? this.delegate.lstatSync(p) : new ScrStats(fs.lstatSync(p));
+        return this.delegate ? this.delegate.lstatSync(p) : this.statSyncImpl(p, true);
+    }
+
+    /*
+     * The native fs.Stats handle is produced and consumed inside this
+     * method: copying it through a parameter (ctor or helper) is itself
+     * the SC1101 crossing, so the unwrap stays inline here.
+     */
+    private statSyncImpl(p: string, lstat: boolean): ScrStats {
+        const s = lstat ? fs.lstatSync(p) : fs.statSync(p);
+        const out = new ScrStats();
+        out.setPredicates(
+            s.isFile(),
+            s.isDirectory(),
+            s.isBlockDevice(),
+            s.isCharacterDevice(),
+            s.isSymbolicLink(),
+            s.isFIFO(),
+            s.isSocket(),
+            false
+        );
+        out.dev = s.dev;
+        out.ino = s.ino;
+        out.mode = s.mode;
+        out.nlink = s.nlink;
+        out.uid = s.uid;
+        out.gid = s.gid;
+        out.rdev = s.rdev;
+        out.size = s.size;
+        out.blksize = s.blksize;
+        out.blocks = s.blocks;
+        out.atimeMs = s.atimeMs;
+        out.mtimeMs = s.mtimeMs;
+        out.ctimeMs = s.ctimeMs;
+        out.birthtimeMs = s.birthtimeMs;
+        return out;
     }
 
     realpathSync(p: string): string {
@@ -217,7 +230,18 @@ export class FakeFS {
         if (options?.withFileTypes) {
             const entries: ScrDirent[] = [];
             for (const d of fs.readdirSync(p, { withFileTypes: true })) {
-                entries.push(new ScrDirent(d));
+                const e = new ScrDirent();
+                e.name = d.name;
+                e.setPredicates(
+                    d.isFile(),
+                    d.isDirectory(),
+                    d.isBlockDevice(),
+                    d.isCharacterDevice(),
+                    d.isSymbolicLink(),
+                    d.isFIFO(),
+                    d.isSocket()
+                );
+                entries.push(e);
             }
             return entries;
         }
