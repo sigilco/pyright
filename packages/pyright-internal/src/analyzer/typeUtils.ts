@@ -2638,50 +2638,50 @@ export function containsAnyRecursive(type: Type, includeUnknown = true): boolean
     return walker.foundAny;
 }
 
+class AnyOrUnknownWalker extends TypeWalker {
+    anyOrUnknownType: AnyType | UnknownType | undefined;
+
+    constructor(private _recurse: boolean) {
+        super();
+    }
+
+    override visitTypeAlias(type: Type) {
+        // Don't explore type aliases.
+    }
+
+    override visitUnknown(type: UnknownType) {
+        this.anyOrUnknownType = this.anyOrUnknownType ? preserveUnknown(this.anyOrUnknownType, type) : type;
+    }
+
+    override visitAny(type: AnyType) {
+        this.anyOrUnknownType = this.anyOrUnknownType ? preserveUnknown(this.anyOrUnknownType, type) : type;
+    }
+
+    override visitClass(type: ClassType) {
+        if (this._recurse) {
+            super.visitClass(type);
+        }
+    }
+
+    override visitFunction(type: FunctionType) {
+        if (this._recurse) {
+            // A function with a "..." type is effectively an "Any".
+            if (FunctionType.isGradualCallableForm(type)) {
+                this.anyOrUnknownType = this.anyOrUnknownType
+                    ? preserveUnknown(this.anyOrUnknownType, AnyType.create())
+                    : AnyType.create();
+            }
+
+            super.visitFunction(type);
+        }
+    }
+}
+
 // Determines if the type contains an Any or Unknown type. If so,
 // it returns the Any or Unknown type. Unknowns are preferred over
 // Any if both are present. If recurse is true, it will recurse
 // through type arguments and parameters.
 export function containsAnyOrUnknown(type: Type, recurse: boolean): AnyType | UnknownType | undefined {
-    class AnyOrUnknownWalker extends TypeWalker {
-        anyOrUnknownType: AnyType | UnknownType | undefined;
-
-        constructor(private _recurse: boolean) {
-            super();
-        }
-
-        override visitTypeAlias(type: Type) {
-            // Don't explore type aliases.
-        }
-
-        override visitUnknown(type: UnknownType) {
-            this.anyOrUnknownType = this.anyOrUnknownType ? preserveUnknown(this.anyOrUnknownType, type) : type;
-        }
-
-        override visitAny(type: AnyType) {
-            this.anyOrUnknownType = this.anyOrUnknownType ? preserveUnknown(this.anyOrUnknownType, type) : type;
-        }
-
-        override visitClass(type: ClassType) {
-            if (this._recurse) {
-                super.visitClass(type);
-            }
-        }
-
-        override visitFunction(type: FunctionType) {
-            if (this._recurse) {
-                // A function with a "..." type is effectively an "Any".
-                if (FunctionType.isGradualCallableForm(type)) {
-                    this.anyOrUnknownType = this.anyOrUnknownType
-                        ? preserveUnknown(this.anyOrUnknownType, AnyType.create())
-                        : AnyType.create();
-                }
-
-                super.visitFunction(type);
-            }
-        }
-    }
-
     const walker = new AnyOrUnknownWalker(recurse);
     walker.walk(type);
     return walker.anyOrUnknownType;

@@ -28,6 +28,17 @@ export class CacheManager {
     private readonly _cacheOwners: CacheOwner[] = [];
     private _sharedUsageBuffer: SharedArrayBuffer | undefined;
     private _sharedUsagePosition = 0;
+
+    static is(obj: any): obj is CacheManager {
+        return (
+            obj.registerCacheOwner !== undefined &&
+            obj.unregisterCacheOwner !== undefined &&
+            obj.pauseTracking !== undefined &&
+            obj.getCacheUsage !== undefined &&
+            obj.emptyCache !== undefined &&
+            obj.getUsedHeapRatio !== undefined
+        );
+    }
     private _lastHeapStats = Date.now();
 
     constructor(private readonly _maxWorkers: number = 0) {
@@ -185,15 +196,4 @@ export class CacheManager {
     }
 }
 
-export namespace CacheManager {
-    export function is(obj: any): obj is CacheManager {
-        return (
-            obj.registerCacheOwner !== undefined &&
-            obj.unregisterCacheOwner !== undefined &&
-            obj.pauseTracking !== undefined &&
-            obj.getCacheUsage !== undefined &&
-            obj.emptyCache !== undefined &&
-            obj.getUsedHeapRatio !== undefined
-        );
-    }
-}
+
