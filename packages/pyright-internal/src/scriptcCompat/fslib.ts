@@ -33,6 +33,155 @@ export const ppath = Object.assign({}, path.posix, { root: '/' });
 const ZIP_UNAVAILABLE = 'scriptc-native build: zip archive support is not available';
 
 /*
+ * scriptc: native fs.Stats/fs.Dirent handles cannot cross a class-method
+ * boundary (converting typed values to 'unknown' -> SC1101). Every fs
+ * result is therefore wrapped into these concrete program classes at the
+ * point it leaves node:fs; predicates are eagerly copied into bools and
+ * exposed as real methods (function-valued fields cannot materialize
+ * across a dynamic boundary either).
+ */
+export class ScrStats {
+    private _isFile = false;
+    private _isDirectory = false;
+    private _isBlockDevice = false;
+    private _isCharacterDevice = false;
+    private _isSymbolicLink = false;
+    private _isFIFO = false;
+    private _isSocket = false;
+    private _isZipDirectory = false;
+    dev = 0;
+    ino = 0;
+    mode = 0;
+    nlink = 0;
+    uid = 0;
+    gid = 0;
+    rdev = 0;
+    size = 0;
+    blksize = 0;
+    blocks = 0;
+    atimeMs = 0;
+    mtimeMs = 0;
+    ctimeMs = 0;
+    birthtimeMs = 0;
+    constructor(stat?: fs.Stats) {
+        if (stat) {
+            this.setFromNative(stat);
+        }
+    }
+    setFromNative(stat: fs.Stats): void {
+        this._isFile = stat.isFile();
+        this._isDirectory = stat.isDirectory();
+        this._isBlockDevice = stat.isBlockDevice();
+        this._isCharacterDevice = stat.isCharacterDevice();
+        this._isSymbolicLink = stat.isSymbolicLink();
+        this._isFIFO = stat.isFIFO();
+        this._isSocket = stat.isSocket();
+        this.dev = stat.dev;
+        this.ino = stat.ino;
+        this.mode = stat.mode;
+        this.nlink = stat.nlink;
+        this.uid = stat.uid;
+        this.gid = stat.gid;
+        this.rdev = stat.rdev;
+        this.size = stat.size;
+        this.blksize = stat.blksize;
+        this.blocks = stat.blocks;
+        this.atimeMs = stat.atimeMs;
+        this.mtimeMs = stat.mtimeMs;
+        this.ctimeMs = stat.ctimeMs;
+        this.birthtimeMs = stat.birthtimeMs;
+    }
+    isFile() {
+        return this._isFile;
+    }
+    isDirectory() {
+        return this._isDirectory;
+    }
+    isBlockDevice() {
+        return this._isBlockDevice;
+    }
+    isCharacterDevice() {
+        return this._isCharacterDevice;
+    }
+    isSymbolicLink() {
+        return this._isSymbolicLink;
+    }
+    isFIFO() {
+        return this._isFIFO;
+    }
+    isSocket() {
+        return this._isSocket;
+    }
+    isZipDirectory() {
+        return this._isZipDirectory;
+    }
+    setPredicates(
+        isFile: boolean,
+        isDirectory: boolean,
+        isBlockDevice: boolean,
+        isCharacterDevice: boolean,
+        isSymbolicLink: boolean,
+        isFIFO: boolean,
+        isSocket: boolean,
+        isZipDirectory: boolean
+    ): void {
+        this._isFile = isFile;
+        this._isDirectory = isDirectory;
+        this._isBlockDevice = isBlockDevice;
+        this._isCharacterDevice = isCharacterDevice;
+        this._isSymbolicLink = isSymbolicLink;
+        this._isFIFO = isFIFO;
+        this._isSocket = isSocket;
+        this._isZipDirectory = isZipDirectory;
+    }
+}
+
+export class ScrDirent {
+    name = '';
+    parentPath = '';
+    private _isFile = false;
+    private _isDirectory = false;
+    private _isBlockDevice = false;
+    private _isCharacterDevice = false;
+    private _isSymbolicLink = false;
+    private _isFIFO = false;
+    private _isSocket = false;
+    constructor(dirent?: fs.Dirent) {
+        if (dirent) {
+            this.name = dirent.name;
+            this._isFile = dirent.isFile();
+            this._isDirectory = dirent.isDirectory();
+            this._isBlockDevice = dirent.isBlockDevice();
+            this._isCharacterDevice = dirent.isCharacterDevice();
+            this._isSymbolicLink = dirent.isSymbolicLink();
+            this._isFIFO = dirent.isFIFO();
+            this._isSocket = dirent.isSocket();
+        }
+    }
+    isFile() {
+        return this._isFile;
+    }
+    isDirectory() {
+        return this._isDirectory;
+    }
+    isBlockDevice() {
+        return this._isBlockDevice;
+    }
+    isCharacterDevice() {
+        return this._isCharacterDevice;
+    }
+    isSymbolicLink() {
+        return this._isSymbolicLink;
+    }
+    isFIFO() {
+        return this._isFIFO;
+    }
+    isSocket() {
+        return this._isSocket;
+    }
+}
+
+/*
  * Node-backed filesystem with an optional delegate: subclasses that wrap
  * another FS (PosixFS/VirtualFS/ZipOpenFS) pass the inner FS and every
  * method forwards to it when present. This collapses fslib's proxy-class
@@ -45,12 +194,12 @@ export class FakeFS {
         return this.delegate ? this.delegate.existsSync(p) : fs.existsSync(p);
     }
 
-    statSync(p: string): fs.Stats {
-        return this.delegate ? this.delegate.statSync(p) : fs.statSync(p);
+    statSync(p: string): ScrStats {
+        return this.delegate ? this.delegate.statSync(p) : new ScrStats(fs.statSync(p));
     }
 
-    lstatSync(p: string): fs.Stats {
-        return this.delegate ? this.delegate.lstatSync(p) : fs.lstatSync(p);
+    lstatSync(p: string): ScrStats {
+        return this.delegate ? this.delegate.lstatSync(p) : new ScrStats(fs.lstatSync(p));
     }
 
     realpathSync(p: string): string {
@@ -58,16 +207,21 @@ export class FakeFS {
     }
 
     readdirSync(p: string): string[];
-    readdirSync(p: string, options: { withFileTypes: true }): fs.Dirent[];
-    readdirSync(p: string, options?: { withFileTypes?: boolean }): string[] | fs.Dirent[] {
+    readdirSync(p: string, options: { withFileTypes: true }): ScrDirent[];
+    readdirSync(p: string, options?: { withFileTypes?: boolean }): string[] | ScrDirent[] {
         if (this.delegate) {
             return options?.withFileTypes
                 ? this.delegate.readdirSync(p, { withFileTypes: true })
                 : this.delegate.readdirSync(p);
         }
-        return options?.withFileTypes
-            ? fs.readdirSync(p, { withFileTypes: true })
-            : fs.readdirSync(p);
+        if (options?.withFileTypes) {
+            const entries: ScrDirent[] = [];
+            for (const d of fs.readdirSync(p, { withFileTypes: true })) {
+                entries.push(new ScrDirent(d));
+            }
+            return entries;
+        }
+        return fs.readdirSync(p);
     }
 
     readFileSync(p: string): Buffer;
