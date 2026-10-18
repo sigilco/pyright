@@ -1,5 +1,5 @@
 diff --git a/dist/date.js b/dist/date.js
-index 40da0f12ed77c89771aca34d292ae31b084a4b9b..13734011fc499806080b70378cdd9f6ac2902e2e 100644
+index 40da0f12ed77c89771aca34d292ae31b084a4b9b..7dfb6bb67e52476baf9b0e3312a09da979afacb1 100644
 --- a/dist/date.js
 +++ b/dist/date.js
 @@ -26,10 +26,11 @@
@@ -18,7 +18,7 @@ index 40da0f12ed77c89771aca34d292ae31b084a4b9b..13734011fc499806080b70378cdd9f6a
      constructor(date) {
          let hasDate = true;
          let hasTime = true;
-@@ -59,30 +60,72 @@ export class TomlDate extends Date {
+@@ -59,30 +60,60 @@ export class TomlDate extends Date {
                  date = '';
              }
          }
@@ -64,18 +64,6 @@ index 40da0f12ed77c89771aca34d292ae31b084a4b9b..13734011fc499806080b70378cdd9f6a
 +    getUTCMilliseconds() {
 +        return this._date.getUTCMilliseconds();
 +    }
-+    toString() {
-+        return this._date.toString();
-+    }
-+    toDateString() {
-+        return this._date.toDateString();
-+    }
-+    toTimeString() {
-+        return this._date.toTimeString();
-+    }
-+    toLocaleString() {
-+        return this._date.toLocaleString();
-+    }
      isDateTime() {
 -        return this.#hasDate && this.#hasTime;
 +        return this._hasDate && this._hasTime;
@@ -102,7 +90,7 @@ index 40da0f12ed77c89771aca34d292ae31b084a4b9b..13734011fc499806080b70378cdd9f6a
          // Local Date
          if (this.isDate())
              return iso.slice(0, 10);
-@@ -90,38 +133,38 @@ export class TomlDate extends Date {
+@@ -90,38 +121,50 @@ export class TomlDate extends Date {
          if (this.isTime())
              return iso.slice(11, 23);
          // Local DateTime
@@ -153,3 +141,15 @@ index 40da0f12ed77c89771aca34d292ae31b084a4b9b..13734011fc499806080b70378cdd9f6a
          return date;
      }
  }
++TomlDate.prototype.toString = function () {
++    return this._date.toString();
++};
++TomlDate.prototype.toDateString = function () {
++    return this._date.toDateString();
++};
++TomlDate.prototype.toTimeString = function () {
++    return this._date.toTimeString();
++};
++TomlDate.prototype.toLocaleString = function () {
++    return this._date.toLocaleString();
++};
