@@ -33,6 +33,26 @@ Facts that shape the workflow:
 - Partition cache lives at `~/.cache/scriptc/build/native-v1/partitions/<sha256(helper+target)[:32]>/`.
 - Preflight status (2026-10-18, `@ts-nocheck` bundle): npm 0.3.6 → **0 hard refusals, 100 deferred-runtime sites** — the bundle BUILDS; remaining work is runtime fences on executed paths. Probe-first is still the live loop for fence fixes (a bundle edit = ~44min cold build).
 
+## Portable cache (GitHub Releases)
+
+`~/.cache/scriptc` restores across machines via two scripts in `packages/pyright/scripts/`:
+
+```bash
+cd packages/pyright
+node scripts/cache-restore.mjs   # BEFORE your first build on a cold machine
+node scripts/cache-publish.mjs   # after a successful cold build / bundle change
+```
+
+- **Key:** `scriptc-<scriptc-version>-<sha256(dist-cli-dev/pyright-native.js)[:16]>.tar.zst` (`.tar.gz` fallback when zstd is absent). The asset name is the whole cache key — any source change produces a new key, and a bundle byte-diff means a cold build.
+- **What's inside:** the whole `build/native-v1/` subtree — `frontend/` (serialized program, ~533MB), `object/` (hash-addressed .o + .sha256), `partitions/` (per-partition .bc/.o). All entries are content-hash-named: stale entries waste disk, never corrupt.
+- **Measured on this bundle (2026-10-19, 0.3.6):** cold build 47m27s → wipe cache → restore → **5.8s** (whole-program replay). A partitions-only restore gives **zero** speedup (49m06s — emit re-runs regardless); `frontend/` is the actual reuse lever, correcting the earlier "partitions drive reuse" claim — partitions only pay off on *edited* inputs.
+- **RangeError caveat:** the `frontend/` entry is the same "cached program" that can throw `RangeError: Invalid string length` in `compileTracked` on very large inputs. Our 533MB entry restored+replayed fine; if a restored build crashes with that error, `rm -rf ~/.cache/scriptc/build` and rebuild cold (then republish).
+- **Release:** assets live on the rolling `scriptc-cache` release tag; publish creates it if absent and prunes to the newest 3 tarballs after upload.
+- **Restore semantics:** `cache-restore.mjs` prints `HIT`/`MISS` and always exits 0 — a MISS means proceed cold. Extraction is idempotent (tar over the cache root).
+- **When to publish:** after every successful cold build of a new bundle (the next session will restore it), and after bundle-affecting changes land. Stale keys are pruned automatically.
+
+Env overrides for other machines: `SCRIPTC` (scriptc binary), `GH_REPO`, `RELEASE_TAG`, `SCRIPTC_CACHE_DIR`. Requires `gh` authenticated against the repo.
+
 ## Probe-first workflow
 
 One tiny `.js` program per fence class, compiled through the same toolchain in ~1s instead of a bundle build.
