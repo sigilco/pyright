@@ -222,7 +222,7 @@ function getCalledBuiltInName(
         expression.d.leftExpr.nodeType === ParseNodeType.Name
     ) {
         const symbolWithScope = scope.lookUpSymbolRecursive(expression.d.leftExpr.d.value);
-        const declarations = symbolWithScope?.symbol.getDeclarations() ?? [];
+        const declarations = symbolWithScope ? symbolWithScope.symbol.getDeclarations() : [];
         const declaration = declarations[declarations.length - 1];
         if (
             declaration?.type === DeclarationType.Alias &&

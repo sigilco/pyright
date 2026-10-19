@@ -1893,7 +1893,8 @@ export function* getClassMemberIterator(
             const memberFields = ClassType.getSymbolTable(specializedMroClass);
             const skipTdEntry =
                 (flags & MemberAccessFlags.SkipTypedDictEntries) !== 0 &&
-                specializedMroClass.shared.typedDictEntries?.knownItems.has(memberName);
+                (specializedMroClass.shared.typedDictEntries !== undefined &&
+                    specializedMroClass.shared.typedDictEntries.knownItems.has(memberName));
 
             // Look at instance members first if requested.
             if ((flags & MemberAccessFlags.SkipInstanceMembers) === 0) {
@@ -2129,9 +2130,11 @@ export function getTypeVarArgsRecursive(type: Type, recursionCount = 0): TypeVar
         const combinedList: TypeVarType[] = [];
 
         if (aliasInfo.typeArgs) {
-            aliasInfo?.typeArgs.forEach((typeArg) => {
-                addTypeVarsToListIfUnique(combinedList, getTypeVarArgsRecursive(typeArg, recursionCount));
-            });
+            if (aliasInfo && aliasInfo.typeArgs) {
+                aliasInfo.typeArgs.forEach((typeArg) => {
+                    addTypeVarsToListIfUnique(combinedList, getTypeVarArgsRecursive(typeArg, recursionCount));
+                });
+            }
 
             return combinedList;
         }

@@ -143,7 +143,7 @@ export function isAutomaticOverloadSeedSyntax(node: ParseNode): node is CallNode
 
 export function findAutomaticOverloadSeeds(nodes: readonly ParseNode[], evaluator: TypeEvaluator): CallNode[] {
     const declarations = (name: NameNode) =>
-        evaluator.lookUpSymbolRecursive(name, name.d.value, true)?.symbol.getDeclarations() ?? [];
+        evaluator.lookUpSymbolRecursive(name, name.d.value, true)?.symbol?.getDeclarations() ?? [];
     return nodes.filter((node): node is CallNode => {
         if (!isAutomaticOverloadSeedSyntax(node)) {
             return false;

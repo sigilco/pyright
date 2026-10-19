@@ -19,7 +19,11 @@ import { TypeEvaluator } from './typeEvaluatorTypes';
 import { ClassType, FunctionType, isClassInstance, isFunction, isFunctionOrOverloaded, OverloadedType } from './types';
 import { lookUpClassMember, partiallySpecializeType } from './typeUtils';
 
-export class OverloadResultAdmissionLimit extends Error {}
+export class OverloadResultAdmissionLimit extends Error {
+    // scriptc: see overloadResultController.ts — instanceof on builtin-extending
+    // classes hits SC1090, so catches check this flag.
+    readonly isOverloadResultAdmissionLimit = true;
+}
 
 const maxProjectionDeclarations = 32;
 const maxReachingVisits = 256;
@@ -114,7 +118,7 @@ export function admitLocalOverloadResults(
             try {
                 nodes = collectOverloadResultNodes(node, limits.rootNodes);
             } catch (error) {
-                if (!(error instanceof OverloadResultAdmissionLimit)) {
+                if (!(error as OverloadResultAdmissionLimit)?.isOverloadResultAdmissionLimit) {
                     throw error;
                 }
                 continue;
@@ -608,7 +612,7 @@ export function admitLocalOverloadResults(
         }
         result.complete = true;
     } catch (error) {
-        if (!(error instanceof OverloadResultAdmissionLimit)) {
+        if (!(error as OverloadResultAdmissionLimit)?.isOverloadResultAdmissionLimit) {
             throw error;
         }
         result.reason = error.message;

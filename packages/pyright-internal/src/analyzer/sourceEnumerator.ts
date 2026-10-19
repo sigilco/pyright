@@ -228,7 +228,6 @@ export class SourceEnumerator {
             this._fs,
             dir.uri
         );
-        console.error(`_exploreDir: ${dir.uri.toUserVisibleString()} files=${files.length} dirs=${directories.length}`);
 
         for (const symlinkedDir of symlinkedDirectories) {
             this._recordSymlinkedDirectoryRoot(symlinkedDir);
@@ -291,9 +290,7 @@ export class SourceEnumerator {
     }
 
     private _exploreInclude(includeSpec: FileSpec) {
-        console.error(`_exploreInclude: root=${includeSpec.wildcardRoot.toUserVisibleString()} rx=${includeSpec.regExp.source}`);
         if (FileSpec.isInPath(includeSpec.wildcardRoot, this._excludes)) {
-            console.error('_exploreInclude: excluded by isInPath');
             return;
         }
 
@@ -309,7 +306,6 @@ export class SourceEnumerator {
         }
 
         const stat = tryStat(this._fs, includeSpec.wildcardRoot);
-        console.error(`_exploreInclude: stat=${stat ? `isFile=${stat.isFile()} isDir=${stat.isDirectory()}` : 'undefined'}`);
         if (stat?.isFile()) {
             this._matches.set(includeSpec.wildcardRoot.key, includeSpec.wildcardRoot);
         } else if (stat?.isDirectory()) {

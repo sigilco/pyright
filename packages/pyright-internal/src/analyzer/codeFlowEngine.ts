@@ -2273,11 +2273,10 @@ export function getCodeFlowEngine(
         // name, which can be an alias (e.g. "np" rather than "numpy").
         if (!wildcardDecl && !importInfo.isNativeLib && importInfo.resolvedUris.length > 0) {
             const resolvedPath = importInfo.resolvedUris[importInfo.resolvedUris.length - 1];
-            const importedDecls = nodeInfo
-                .getFileInfo(flowNode.node)
-                .importLookup(resolvedPath)
-                ?.symbolTable.get(name)
-                ?.getDeclarations();
+            const importScope = nodeInfo.getFileInfo(flowNode.node).importLookup(resolvedPath);
+            // scriptc: `x?.y.m()` still evaluates `.m` on undefined x — spell it out.
+            const importedSymbol = importScope ? importScope.symbolTable.get(name) : undefined;
+            const importedDecls = importedSymbol ? importedSymbol.getDeclarations() : undefined;
             const importedDecl = importedDecls?.[importedDecls.length - 1];
 
             if (

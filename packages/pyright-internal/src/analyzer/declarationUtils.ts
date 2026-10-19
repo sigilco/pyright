@@ -191,7 +191,8 @@ export function isDefinedInFile(decl: Declaration, fileUri: Uri, nodeInfo: Analy
         // Alias decl's path points to the original symbol
         // the alias is pointing to. So, we need to get the
         // filepath in that the alias is defined from the node.
-        return getFileInfoFromNode(decl.node, nodeInfo)?.fileUri.equals(fileUri);
+        const declFileInfo = getFileInfoFromNode(decl.node, nodeInfo);
+        return declFileInfo ? declFileInfo.fileUri.equals(fileUri) : undefined;
     }
 
     // Other decls, the path points to the file the symbol is defined in.
