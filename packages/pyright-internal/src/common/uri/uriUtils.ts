@@ -468,11 +468,21 @@ export function deduplicateFolders(listOfFolders: Uri[][], excludes: Uri[] = [])
 
 export function getRootUri(serviceProvider: ServiceProvider): Uri | undefined;
 export function getRootUri(caseDetector: CaseSensitivityDetector): Uri | undefined;
+// scriptc: assigning to `global` doesn't persist (`global.x = v; global.x` reads
+// back undefined), so __rootDirectory set by the CLI entry point never reaches
+// getModulePath(). Keep a module-level mirror the entry point can also set.
+let scriptcRootDirectory: string | undefined;
+
+export function setScriptcRootDirectory(dir: string) {
+    scriptcRootDirectory = dir;
+}
+
 export function getRootUri(csdOrSp: CaseSensitivityDetector | ServiceProvider): Uri | undefined {
     csdOrSp = CaseSensitivityDetector.is(csdOrSp) ? csdOrSp : csdOrSp.get(ServiceKeys.caseSensitivityDetector);
 
-    if ((global as any).__rootDirectory) {
-        return Uri.file((global as any).__rootDirectory, csdOrSp);
+    const rootDirectory = (global as any).__rootDirectory || scriptcRootDirectory;
+    if (rootDirectory) {
+        return Uri.file(rootDirectory, csdOrSp);
     }
 
     return undefined;
