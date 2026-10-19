@@ -514,7 +514,7 @@ async function runSingleThreaded(
 
     const exitStatus = createDeferred<ExitStatus>();
     const reportTypeStubError = (error: unknown) => {
-        const message = error instanceof Error ? error.message : '';
+        const message = (error as Error)?.message ?? '';
         console.error(`Error occurred when creating type stub: ${message}`);
         exitStatus.resolve(ExitStatus.FatalError);
     };
@@ -979,9 +979,7 @@ function verifyPackageTypes(
         return jsonReport.typeCompleteness!.completenessScore < 1 ? ExitStatus.ErrorsReported : ExitStatus.NoErrors;
     } catch (err) {
         let errMessage = '';
-        if (err instanceof Error) {
-            errMessage = ': ' + err.message;
-        }
+        errMessage = ': ' + ((err as Error)?.message ?? '');
 
         console.error(`Error occurred when verifying types: ` + errMessage);
         return ExitStatus.FatalError;

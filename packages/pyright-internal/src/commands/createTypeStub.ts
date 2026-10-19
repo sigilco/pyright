@@ -59,9 +59,7 @@ abstract class BaseCreateTypeStubCommand {
                 this.ls.console.error(errMessage);
             } else {
                 let errMessage = '';
-                if (err instanceof Error) {
-                    errMessage = ': ' + err.message;
-                }
+                errMessage = ': ' + ((err as Error)?.message ?? '');
                 errMessage = this.getErrorPrefix(importName) + errMessage;
                 this.ls.console.error(errMessage);
                 this.ls.window.showErrorMessage(errMessage);

@@ -196,7 +196,7 @@ export async function main(argv = process.argv.slice(2)) {
 
 if (require.main === module) {
     main().catch((error) => {
-        console.error(error instanceof Error ? error.message : error);
+        console.error((error as Error)?.message ?? error);
         process.exitCode = 1;
     });
 }
