@@ -1599,7 +1599,7 @@ export class ConfigOptions {
             // the identical effective version, just set one step earlier.
             this.defaultPythonVersion = latestStablePythonVersion;
         } else {
-            console.info(`Assuming Python version ${PythonVersion.toString(this.defaultPythonVersion)}`);
+            console.info(`Assuming Python version ${PythonVersion.toMajorMinorString(this.defaultPythonVersion)}`);
         }
 
         for (const log of importLogger.getLogs()) {

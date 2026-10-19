@@ -682,7 +682,7 @@ export class AnalyzerService {
                 } else {
                     log(this._console, logLevel, `    (none)`);
                 }
-                log(this._console, logLevel, `  Python version: ${PythonVersion.toString(execEnv.pythonVersion)}`);
+                log(this._console, logLevel, `  Python version: ${PythonVersion.toMajorMinorString(execEnv.pythonVersion)}`);
                 log(this._console, logLevel, `  Python platform: ${execEnv.pythonPlatform ?? 'All'}`);
                 log(this._console, logLevel, `  Search paths:`);
                 const roots = importResolver.getImportRoots(execEnv, /* forLogging */ true);
