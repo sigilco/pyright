@@ -232,14 +232,18 @@ export class FakeFS {
             for (const d of fs.readdirSync(p, { withFileTypes: true })) {
                 const e = new ScrDirent();
                 e.name = d.name;
+                // Native Dirent methods: only isFile/isDirectory/isSymbolicLink
+                // have scriptc lowerings — isBlockDevice/isCharacterDevice/
+                // isFIFO/isSocket throw SC2020 (verified by probes/dirent-predicates).
+                // Those kinds are never pyright source files, so report them false.
                 e.setPredicates(
                     d.isFile(),
                     d.isDirectory(),
-                    d.isBlockDevice(),
-                    d.isCharacterDevice(),
+                    false,
+                    false,
                     d.isSymbolicLink(),
-                    d.isFIFO(),
-                    d.isSocket()
+                    false,
+                    false
                 );
                 entries.push(e);
             }
