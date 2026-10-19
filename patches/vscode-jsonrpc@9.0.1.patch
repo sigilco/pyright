@@ -1,0 +1,12 @@
+diff --git a/lib/common/linkedMap.js b/lib/common/linkedMap.js
+index 521079a696de7b3d96e1d23be79ad3cc25629cdb..7f0d702f32906bd3dedda564b0e4ccbcf999f186 100644
+--- a/lib/common/linkedMap.js
++++ b/lib/common/linkedMap.js
+@@ -14,7 +14,6 @@ var Touch;
+     Touch.AsNew = Touch.Last;
+ })(Touch || (exports.Touch = Touch = {}));
+ class LinkedMap {
+-    [Symbol.toStringTag] = 'LinkedMap';
+     _map;
+     _head;
+     _tail;

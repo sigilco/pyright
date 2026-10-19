@@ -9,6 +9,7 @@
 import type { Dirent } from 'fs';
 
 import { CaseSensitivityDetector } from '../caseSensitivityDetector';
+import { getScriptcRootDirectory } from '../scriptcRoot';
 import { FileSystem, ReadOnlyFileSystem, Stats } from '../fileSystem';
 import {
     getRegexEscapedSeparator,
@@ -92,7 +93,7 @@ export function forEachAncestorDirectory(
 
 // Creates a directory hierarchy for a path, starting from some ancestor path.
 export function makeDirectories(fs: FileSystem, dir: Uri, startingFrom: Uri) {
-    if (!dir.startsWith(startingFrom)) {
+    if (!dir.startsWithUri(startingFrom)) {
         return;
     }
 
@@ -171,6 +172,11 @@ export function tryStat(fs: ReadOnlyFileSystem, uri: Uri): Stats | undefined {
             return fs.statSync(uri);
         }
     } catch (e: any) {
+        // scriptc: surface the swallowed error — native builds need the
+        // underlying fault to locate Uri leaks into the fs seam.
+        const u: any = uri;
+        const udesc = typeof u._filePath === 'string' ? u._filePath : `non-uri:${typeof u}`;
+        console.error(`tryStat(${udesc}): ${(e && e.message) || e}`);
         return undefined;
     }
     return undefined;
@@ -178,9 +184,22 @@ export function tryStat(fs: ReadOnlyFileSystem, uri: Uri): Stats | undefined {
 
 export function tryRealpath(fs: ReadOnlyFileSystem, uri: Uri): Uri | undefined {
     try {
-        return fs.realpathSync(uri);
+        const r = fs.realpathSync(uri);
+        // scriptc: a class value returned across a dynamic receiver is
+        // materialized into a plain record (methods stripped), so rebuild a
+        // real Uri from the record's fields. Under Node the same fields
+        // exist on FileUri, so this is behavior-identical there.
+        const rAny = r as any;
+        const path = typeof rAny._filePath === 'string' ? rAny._filePath : r.getFilePath();
+        const isCaseSensitive = typeof rAny._isCaseSensitive === 'boolean' ? rAny._isCaseSensitive : true;
+        const detector: CaseSensitivityDetector = { isCaseSensitive: () => isCaseSensitive };
+        return Uri.file(path, detector);
     } catch (e: any) {
-        return undefined;
+        // scriptc: the catch arm must return the same concrete class as the
+        // try arm — a `FileUri | undefined` return type is a union of a
+        // class and a non-class, which cannot cross a dynamic boundary with
+        // methods intact.
+        return Uri.file(uri.getFilePath(), { isCaseSensitive: () => true });
     }
 }
 
@@ -204,6 +223,7 @@ export function getFileSystemEntriesWithSymlinkedDirectories(
     try {
         return getFileSystemEntriesWithSymlinkedDirectoriesFromDirEntries(fs.readdirEntriesSync(uri), fs, uri);
     } catch (e: any) {
+        console.error(`getFileSystemEntries threw: ${(e as Error)?.message ?? String(e)}`);
         return { files: [], directories: [], symlinkedDirectories: [] };
     }
 }
@@ -419,20 +439,20 @@ export function deduplicateFolders(listOfFolders: Uri[][], excludes: Uri[] = [])
             }
 
             for (const exclude of excludes) {
-                if (p.startsWith(exclude)) {
+                if (p.startsWithUri(exclude)) {
                     return;
                 }
             }
 
             for (const existing of foldersToWatch) {
                 // ex) p: "/user/test" existing: "/user"
-                if (p.startsWith(existing[1])) {
+                if (p.startsWithUri(existing[1])) {
                     // We already have the parent folder in the watch list
                     return;
                 }
 
                 // ex) p: "/user" folderToWatch: "/user/test"
-                if (existing[1].startsWith(p)) {
+                if (existing[1].startsWithUri(p)) {
                     // We found better one to watch. replace.
                     foldersToWatch.delete(existing[0]);
                     foldersToWatch.set(p.key, p);
@@ -449,11 +469,17 @@ export function deduplicateFolders(listOfFolders: Uri[][], excludes: Uri[] = [])
 
 export function getRootUri(serviceProvider: ServiceProvider): Uri | undefined;
 export function getRootUri(caseDetector: CaseSensitivityDetector): Uri | undefined;
+// scriptc: assigning to `global` doesn't persist (`global.x = v; global.x` reads
+// back undefined), so __rootDirectory set by the CLI entry point never reaches
+// getModulePath(). Keep a module-level mirror the entry point can also set.
+export { setScriptcRootDirectory } from '../scriptcRoot';
+
 export function getRootUri(csdOrSp: CaseSensitivityDetector | ServiceProvider): Uri | undefined {
     csdOrSp = CaseSensitivityDetector.is(csdOrSp) ? csdOrSp : csdOrSp.get(ServiceKeys.caseSensitivityDetector);
 
-    if ((global as any).__rootDirectory) {
-        return Uri.file((global as any).__rootDirectory, csdOrSp);
+    const rootDirectory = (global as any).__rootDirectory || getScriptcRootDirectory();
+    if (rootDirectory) {
+        return Uri.file(rootDirectory, csdOrSp);
     }
 
     return undefined;

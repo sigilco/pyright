@@ -1,0 +1,13 @@
+diff --git a/source-map-support.js b/source-map-support.js
+index 2942b5eaf1c8229993bbc61fb106451578b9c76a..0395ccc76428aed3fd41e4ce93d859583368e9d0 100644
+--- a/source-map-support.js
++++ b/source-map-support.js
+@@ -357,7 +357,7 @@ function CallSiteToString() {
+ }
+ 
+ function cloneCallSite(frame) {
+-  var object = {};
++  var object = Object.create(Object.prototype);
+   Object.getOwnPropertyNames(Object.getPrototypeOf(frame)).forEach(function(name) {
+     object[name] = /^(?:is|get)/.test(name) ? function() { return frame[name].call(frame); } : frame[name];
+   });

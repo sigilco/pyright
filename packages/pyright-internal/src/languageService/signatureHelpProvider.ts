@@ -123,7 +123,7 @@ export class SignatureHelpProvider {
             // arguments, and we don't want to mistakenly think that we're
             // pointing to a previous argument. Don't scan across open parenthesis so that
             // we don't go into the wrong function call
-            const ch = this._parseResults.text.substr(curOffset, 1);
+            const ch = this._parseResults.text.slice(curOffset, curOffset + 1);
             if (ch === ',' || ch === '(') {
                 break;
             }

@@ -69,7 +69,7 @@ export interface FileSystemEntries {
 }
 
 export function getDirectoryPath(pathString: string): string {
-    return pathString.substr(0, Math.max(getRootLength(pathString), pathString.lastIndexOf(path.sep)));
+    return pathString.slice(0, Math.max(getRootLength(pathString), pathString.lastIndexOf(path.sep)));
 }
 
 /**
@@ -489,7 +489,7 @@ export function getShortenedFileName(pathString: string, maxDirLength = 15) {
 
 export function stripFileExtension(fileName: string, multiDotExtension = false) {
     const ext = getFileExtension(fileName, multiDotExtension);
-    return fileName.substr(0, fileName.length - ext.length);
+    return fileName.slice(0, fileName.length - ext.length);
 }
 
 export function normalizePath(pathString: string): string {

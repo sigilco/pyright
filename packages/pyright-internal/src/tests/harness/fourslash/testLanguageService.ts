@@ -116,7 +116,7 @@ export class TestLanguageService implements LanguageServerInterface {
     }
 
     getWorkspaceForFile(uri: Uri): Promise<Workspace> {
-        if (uri.startsWith(this._workspace.rootUri)) {
+        if (uri.startsWithUri(this._workspace.rootUri)) {
             return Promise.resolve(this._workspace);
         }
 

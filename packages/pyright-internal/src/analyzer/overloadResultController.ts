@@ -196,8 +196,16 @@ const defaultLimits: Readonly<OverloadResultLimits> = {
     calls: 256,
     proofUnits: 512,
 };
-class CandidateCutoff extends Error {}
-class ActivationRestart extends Error {}
+// scriptc: `instanceof` against a class extending a builtin hits SC1090
+// ('instanceof right-hand sides other than classes declared in the
+// program'), so control-flow sentinels carry a discriminant flag and
+// catches check the flag instead.
+class CandidateCutoff extends Error {
+    readonly isCandidateCutoff = true;
+}
+class ActivationRestart extends Error {
+    readonly isActivationRestart = true;
+}
 
 export class ExperimentalOverloadResultController implements EvaluationOperationController {
     readonly roots = new Map<ParseNode, ReadonlySet<number>>();
@@ -296,7 +304,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
 
     getDiagnosticSink(node: ParseNode) {
         const active = this._active;
-        const record = active?.generation.admission.byNode.get(node);
+        const record = active ? active.generation.admission.byNode.get(node) : undefined;
         if (
             !active ||
             !record ||
@@ -332,7 +340,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
                     }
                     return callback();
                 } catch (error) {
-                    if (!(error instanceof ActivationRestart)) {
+                    if (!(error as ActivationRestart)?.isActivationRestart) {
                         throw error;
                     }
                 }
@@ -403,7 +411,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
             for (const node of this._pendingActivation) {
                 this._activated.add(node);
                 const generation = this._ensure(node, true);
-                const record = generation?.admission.byNode.get(node);
+                const record = generation ? generation.admission.byNode.get(node) : undefined;
                 if (generation && record?.admitted && record.seed?.node === node) {
                     this._reserveGeneration(generation);
                     this._automaticWork.activations++;
@@ -445,7 +453,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
             return result ? { result } : undefined;
         }
         const generation = this._ensure(request.node);
-        const record = generation?.admission.byNode.get(request.node);
+        const record = generation ? generation.admission.byNode.get(request.node) : undefined;
         if (
             !generation ||
             !record ||
@@ -518,13 +526,17 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
         if (!initialGeneration && !this._options.automatic) {
             return undefined;
         }
-        initialGeneration?.published.clear();
+        // scriptc: `x?.y.m()` on an actually-undefined `x` still evaluates `.m`
+        // (throws 'reading clear'), so the optional chain is spelled out.
+        if (initialGeneration) {
+            initialGeneration.published.clear();
+        }
         const walk = (node: ParseNode, callback: () => void): void => {
             if (node.nodeType === ParseNodeType.StatementList && this.needsActivationBoundary()) {
                 return this.runWithActivation(() => walk(node, callback));
             }
             const generation = this._ensure(module);
-            const record = generation?.admission.records.get(node);
+            const record = generation ? generation.admission.records.get(node) : undefined;
             if (this._active || !generation || !record || !this._isEnabled(generation, record)) {
                 callback();
                 return;
@@ -586,11 +598,13 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
     evict(module: ModuleNode) {
         assert(!this._active);
         const generation = this._ensure(module);
-        generation?.admission.records.forEach((record) => {
-            if (this._isEnabled(generation, record)) {
-                this._cacheIsolation!.evict(record.root);
-            }
-        });
+        if (generation) {
+            generation.admission.records.forEach((record) => {
+                if (this._isEnabled(generation, record)) {
+                    this._cacheIsolation!.evict(record.root);
+                }
+            });
+        }
     }
 
     getStats(module: ModuleNode) {
@@ -674,7 +688,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
                     },
                 }));
             } catch (error) {
-                if (!(error instanceof OverloadResultAdmissionLimit)) {
+                if (!(error as OverloadResultAdmissionLimit)?.isOverloadResultAdmissionLimit) {
                     throw error;
                 }
                 cutoff = true;
@@ -1040,7 +1054,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
                         }
                     }
                 } catch (error) {
-                    if (!(error instanceof CandidateCutoff)) {
+                    if (!(error as CandidateCutoff)?.isCandidateCutoff) {
                         throw error;
                     }
                     successes.length = 0;
@@ -1201,7 +1215,7 @@ export class ExperimentalOverloadResultController implements EvaluationOperation
                 : undefined;
         }
         const generation = this._ensure(node);
-        const record = generation?.admission.byNode.get(node);
+        const record = generation ? generation.admission.byNode.get(node) : undefined;
         if (!generation || !record || !this._isEnabled(generation, record) || !record.valueNodes.has(node)) {
             return undefined;
         }

@@ -42,7 +42,7 @@ export function cleanAndSplitDocString(rawString: string): string[] {
         if (index === 0) {
             trimmedLines.push(line.trim());
         } else {
-            trimmedLines.push(line.substr(leftSpacesToRemove).trimRight());
+            trimmedLines.push(line.slice(leftSpacesToRemove).trimRight());
         }
     });
 
@@ -84,25 +84,25 @@ export function extractParameterDocumentation(functionDocString: string, paramNa
         // Check for Epytext
         let paramOffset = trimmedLine.indexOf('@param ' + paramName);
         if (paramOffset >= 0) {
-            return trimmedLine.substr(paramOffset + 7);
+            return trimmedLine.slice(paramOffset + 7);
         }
 
         // Check for reST format
         paramOffset = trimmedLine.indexOf(':param ' + paramName);
         if (paramOffset >= 0) {
-            return trimmedLine.substr(paramOffset + 7);
+            return trimmedLine.slice(paramOffset + 7);
         }
 
         // Check for Google (variant 1) format
         paramOffset = trimmedLine.indexOf(paramName + ': ');
         if (paramOffset >= 0) {
-            return trimmedLine.substr(paramOffset);
+            return trimmedLine.slice(paramOffset);
         }
 
         // Check for Google (variant 2) format
         paramOffset = trimmedLine.indexOf(paramName + ' (');
         if (paramOffset >= 0) {
-            return trimmedLine.substr(paramOffset);
+            return trimmedLine.slice(paramOffset);
         }
     }
 
@@ -132,19 +132,19 @@ export function extractAttributeDocumentation(classDocString: string, attrName: 
         // Check for reST format
         let attrOffset = trimmedLine.indexOf(':ivar ' + attrName);
         if (attrOffset >= 0) {
-            return trimmedLine.substr(attrOffset + 6);
+            return trimmedLine.slice(attrOffset + 6);
         }
 
         // Check for Google (variant 1) format
         attrOffset = trimmedLine.indexOf(attrName + ': ');
         if (attrOffset >= 0) {
-            return trimmedLine.substr(attrOffset);
+            return trimmedLine.slice(attrOffset);
         }
 
         // Check for Google (variant 2) format
         attrOffset = trimmedLine.indexOf(attrName + ' (');
         if (attrOffset >= 0) {
-            return trimmedLine.substr(attrOffset);
+            return trimmedLine.slice(attrOffset);
         }
     }
 

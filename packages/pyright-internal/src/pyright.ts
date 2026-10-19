@@ -14,8 +14,8 @@ import { timingStats } from './common/timing';
 /* eslint-enable */
 
 import chalk from 'chalk';
-import commandLineArgs, { CommandLineOptions, OptionDefinition } from 'command-line-args';
 import * as os from 'os';
+import { parseArgs } from 'node:util';
 
 import { ChildProcess, fork } from 'child_process';
 import { AnalysisResults } from './analyzer/analysis';
@@ -144,6 +144,20 @@ interface DiagnosticResult {
     diagnosticCount: number;
 }
 
+interface CommandLineOptions {
+    [key: string]: any;
+}
+
+// Node's ParseArgsError doesn't always carry the offending option in a
+// stable property, so fall back to pulling it out of the message.
+function extractUnknownOptionName(message: string | undefined): string | undefined {
+    if (!message) {
+        return undefined;
+    }
+    const match = message.match(/'([^']+)'|"([^"]+)"/);
+    return match?.[1] ?? match?.[2];
+}
+
 const cancellationNone = Object.freeze({
     isCancellationRequested: false,
     onCancellationRequested: function () {
@@ -156,42 +170,62 @@ const cancellationNone = Object.freeze({
 });
 
 async function processArgs(): Promise<ExitStatus> {
-    const optionDefinitions: OptionDefinition[] = [
-        { name: 'createstub', type: String },
-        { name: 'dependencies', type: Boolean },
-        { name: 'facts', type: Boolean },
-        { name: 'files', type: String, multiple: true, defaultOption: true },
-        { name: 'help', alias: 'h', type: Boolean },
-        { name: 'ignoreexternal', type: Boolean },
-        { name: 'lib', type: Boolean },
-        { name: 'level', type: String },
-        { name: 'outputjson', type: Boolean },
-        { name: 'project', alias: 'p', type: String },
-        { name: 'pythonpath', type: String },
-        { name: 'pythonplatform', type: String },
-        { name: 'pythonversion', type: String },
-        { name: 'skipunannotated', type: Boolean },
-        { name: 'stats', type: Boolean },
-        { name: 'threads', type: parseThreadsArgValue },
-        { name: 'typeshed-path', type: String },
-        { name: 'typeshedpath', alias: 't', type: String },
-        { name: 'venv-path', type: String },
-        { name: 'venvpath', alias: 'v', type: String },
-        { name: 'verifytypes', type: String },
-        { name: 'verbose', type: Boolean },
-        { name: 'version', type: Boolean },
-        { name: 'warnings', type: Boolean },
-        { name: 'watch', alias: 'w', type: Boolean },
-    ];
+    // Parsed with the platform's parseArgs rather than an npm option-parsing
+    // dependency: the engine has first-class parseArgs support, and dropping
+    // command-line-args removes the only `extends Array`/`extends Map` classes
+    // from the CLI bundle (a native-compile fence).
+    const optionDefinitions = {
+        createstub: { type: 'string' },
+        dependencies: { type: 'boolean' },
+        facts: { type: 'boolean' },
+        files: { type: 'string', multiple: true },
+        help: { type: 'boolean', short: 'h' },
+        ignoreexternal: { type: 'boolean' },
+        lib: { type: 'boolean' },
+        level: { type: 'string' },
+        outputjson: { type: 'boolean' },
+        project: { type: 'string', short: 'p' },
+        pythonpath: { type: 'string' },
+        pythonplatform: { type: 'string' },
+        pythonversion: { type: 'string' },
+        skipunannotated: { type: 'boolean' },
+        stats: { type: 'boolean' },
+        threads: { type: 'string' },
+        'typeshed-path': { type: 'string' },
+        typeshedpath: { type: 'string', short: 't' },
+        'venv-path': { type: 'string' },
+        venvpath: { type: 'string', short: 'v' },
+        verifytypes: { type: 'string' },
+        verbose: { type: 'boolean' },
+        version: { type: 'boolean' },
+        warnings: { type: 'boolean' },
+        watch: { type: 'boolean', short: 'w' },
+    } as const;
+
+    // `--threads` takes an optional value in the CLI's grammar (`--threads`
+    // alone means auto); parseArgs has no optional-value option, so a bare
+    // `--threads` token is rewritten to the equivalent `--threads=auto`.
+    const argv = process.argv.slice(2).map((token, index, all) => {
+        if (token === '--threads' && (index + 1 >= all.length || all[index + 1].startsWith('-'))) {
+            return '--threads=auto';
+        }
+        return token;
+    });
 
     let args: CommandLineOptions;
 
     try {
-        args = commandLineArgs(optionDefinitions);
+        const { values, positionals } = parseArgs({ args: argv, options: optionDefinitions, allowPositionals: true });
+        // Positionals are file specs (command-line-args' former defaultOption).
+        args = { ...values, files: [...(values.files ?? []), ...positionals] };
+        // `threads` keeps its original custom value conversion.
+        if (args.threads !== undefined) {
+            args.threads = parseThreadsArgValue(args.threads);
+        }
     } catch (e: any) {
-        const argErr: { name: string; optionName: string } = e;
-        if (argErr && argErr.optionName) {
-            console.error(`Unexpected option ${argErr.optionName}.\n${toolName} --help for usage`);
+        const optionName: string | undefined = e?.optionName ?? extractUnknownOptionName(e?.message);
+        if (optionName) {
+            console.error(`Unexpected option ${optionName}.\n${toolName} --help for usage`);
             return ExitStatus.ParameterError;
         }
 
@@ -302,7 +336,7 @@ async function processArgs(): Promise<ExitStatus> {
             try {
                 const stat = tryStat(tempFileSystem, includeSpec.wildcardRoot);
                 if (!stat) {
-                    console.error(`File or directory "${includeSpec.wildcardRoot}" does not exist`);
+                    console.error(`File or directory "${includeSpec.wildcardRoot.toUserVisibleString()}" does not exist`);
                     return ExitStatus.ParameterError;
                 }
             } catch {
@@ -480,7 +514,7 @@ async function runSingleThreaded(
 
     const exitStatus = createDeferred<ExitStatus>();
     const reportTypeStubError = (error: unknown) => {
-        const message = error instanceof Error ? error.message : '';
+        const message = (error as Error)?.message ?? '';
         console.error(`Error occurred when creating type stub: ${message}`);
         exitStatus.resolve(ExitStatus.FatalError);
     };
@@ -937,7 +971,7 @@ function verifyPackageTypes(
         const jsonReport = buildTypeCompletenessReport(packageName, report, minSeverityLevel);
 
         if (outputJson) {
-            console.info(JSON.stringify(jsonReport, /* replacer */ undefined, 4));
+            console.info(JSON.stringify(jsonReport, /* replacer */ null, 4));
         } else {
             printTypeCompletenessReportText(jsonReport, !!options.configSettings.verboseOutput);
         }
@@ -945,9 +979,7 @@ function verifyPackageTypes(
         return jsonReport.typeCompleteness!.completenessScore < 1 ? ExitStatus.ErrorsReported : ExitStatus.NoErrors;
     } catch (err) {
         let errMessage = '';
-        if (err instanceof Error) {
-            errMessage = ': ' + err.message;
-        }
+        errMessage = ': ' + ((err as Error)?.message ?? '');
 
         console.error(`Error occurred when verifying types: ` + errMessage);
         return ExitStatus.FatalError;
@@ -1291,7 +1323,7 @@ function reportFactsAsJson(
         }
     });
 
-    console.info(JSON.stringify(report, /* replacer */ undefined, 4));
+    console.info(JSON.stringify(report, /* replacer */ null, 4));
     console.info('');
 
     return {
@@ -1338,7 +1370,7 @@ function reportDiagnosticsAsJson(
         });
     });
 
-    console.info(JSON.stringify(report, /* replacer */ undefined, 4));
+    console.info(JSON.stringify(report, /* replacer */ null, 4));
 
     // Output a blank line to help tools that are attempting to parse the
     // JSON output when used in watch mode.

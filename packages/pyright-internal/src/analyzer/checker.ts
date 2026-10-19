@@ -842,9 +842,7 @@ export class Checker extends ParseTreeWalker {
 
     override visitCall(node: CallNode): boolean {
         this._validateIsInstanceCall(node);
-
         this._validateIllegalDefaultParamInitializer(node);
-
         this._validateStandardCollectionInstantiation(node);
 
         if (
@@ -3164,7 +3162,7 @@ export class Checker extends ParseTreeWalker {
             const typeParamScope = this._nodeInfo.getScope(paramList);
 
             for (const param of paramList.d.params) {
-                const symbol = typeParamScope?.symbolTable.get(param.d.name.d.value);
+                const symbol = typeParamScope ? typeParamScope.symbolTable.get(param.d.name.d.value) : undefined;
                 if (!symbol) {
                     // This can happen if the code is unreachable.
                     return;
@@ -4540,7 +4538,7 @@ export class Checker extends ParseTreeWalker {
                             this._reportDeprecatedDiagnostic(
                                 node,
                                 LocMessage.deprecatedType().format({
-                                    version: PythonVersion.toString(deprecatedForm.version),
+                                    version: PythonVersion.toMajorMinorString(deprecatedForm.version),
                                     replacement: deprecatedForm.replacementText,
                                 })
                             );

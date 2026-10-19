@@ -78,7 +78,14 @@ export class LogTracker implements SupportName {
 
         try {
             const maybePromise = callback(state);
-            if (maybePromise instanceof Promise) {
+            // scriptc: `instanceof Promise` has no lowering (SC1090 — RHS must be a
+            // program-declared class) and `x && y` on a native Promise operand throws
+            // SC1042, so detect thenables with plain `!==` + member checks instead.
+            const isPromise =
+                maybePromise !== null &&
+                maybePromise !== undefined &&
+                typeof (maybePromise as Promise<T>).then === 'function';
+            if (isPromise) {
                 return maybePromise
                     .then((result) => {
                         this._onComplete(state, current, title, minimalDuration, logParsingPerf);

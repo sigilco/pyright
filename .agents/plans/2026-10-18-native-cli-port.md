@@ -41,3 +41,13 @@ Goal: distributable pyright **typecheck CLI** for embedding in pyscriptc — no 
 - Post-graph fence density unknown until Path-B engine tweak lands (bounded by inventory).
 - `--threads` under scriptc depends on `fork` option-parity; worst case single-threaded v1.
 - typeshed embedding needs an asset mechanism before a true single-file exe.
+
+## Addendum — pyscriptc TypeFacts input (2026-10-18)
+
+pyscriptc needs `TypeFacts` (serializable type info per symbol); today the CLI only emits diagnostics (mypy-parity, zero facts). Options:
+- **`--facts` verb in this fork (recommended)**: `TypeEvaluator` already computes types — serialize to our JSON contract directly. Cleanest, no LSP hop; pairs with the Phase-2 daemon surface (`facts-file`, `facts-delta` ops over the persistent `Program`).
+- LSP hover: VERIFIED under bun-compile (2026-10-18) — esbuild flat bundle of src/langserver.ts (format=cjs, --main-fields=module,main for jsonc-parser ESM) + `bun build --compile`; initialize/didOpen/hover/documentSymbol over stdio all work, hover returns `(function) def greet(name: str) -> str`, identical null-vs-result parity vs `node dist/pyright-langserver.js`. Caveats: needs sibling typeshed-fallback + __rootDirectory banner. Second choice to --facts but functional today.
+
+- Worker-thread backgroundAnalysis: VERIFIED under bun-compile (2026-10-18). `new Worker(__filename, {workerData})` in `backgroundAnalysis.ts` reruns the same flat CJS bundle in a worker thread (`isMainThread` false → `BackgroundAnalysisRunner.start()`); Bun resolves the embedded `__filename` correctly. Enable via `--cancellationReceive=file:<dir>` argv (without it `createBackgroundAnalysis` returns undefined — file-based cancellation folder is the gate, plus `!isDebugMode()`). Node-vs-binary traces are identical: `BG: Background analysis(1) started` logMessage, `publishDiagnostics`, hover/documentSymbol parity. Driver: `/tmp/lsp-driver.mjs` repro — `node lsp-driver.mjs <server> --stdio --cancellationReceive=file:<dir>`.
+
+Decision recorded from pyscriptc agent input; do not implement in the scriptc-native branch — belongs to the Phase-2 daemon work.

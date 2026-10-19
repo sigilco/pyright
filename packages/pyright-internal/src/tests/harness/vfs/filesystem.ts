@@ -37,7 +37,7 @@ export class TestFileSystemWatcher implements FileWatcher {
     }
 
     fireFileChange(path: Uri, eventType: FileWatcherEventType): boolean {
-        if (this.paths.some((p) => path.startsWith(p))) {
+        if (this.paths.some((p) => path.startsWithUri(p))) {
             this._listener(eventType, path.getFilePath());
         }
         return false;
@@ -245,7 +245,7 @@ export class TestFileSystem implements FileSystem, TempFile, CaseSensitivityDete
      * @link http://pubs.opengroup.org/onlinepubs/9699919799/functions/chdir.html
      */
     chdir(uri: Uri) {
-        let path = uri.getFilePath();
+        let path: string = uri.getFilePath();
         if (this.isReadonly) {
             throw createIOError('EPERM');
         }

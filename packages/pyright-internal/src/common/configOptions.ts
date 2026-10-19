@@ -1152,7 +1152,7 @@ export class ConfigOptions {
         return (
             this.executionEnvironments.find((env) => {
                 const envRoot = Uri.is(env.root) ? env.root : this.projectRoot.resolvePaths(env.root || '');
-                return file.startsWith(envRoot);
+                return file.startsWithUri(envRoot);
             }) ?? this.getDefaultExecEnvironment()
         );
     }
@@ -1591,8 +1591,15 @@ export class ConfigOptions {
 
         const importLogger = new ImportLogger();
         this.defaultPythonVersion = host.getPythonVersion(this.pythonPath, importLogger);
-        if (this.defaultPythonVersion !== undefined) {
-            console.info(`Assuming Python version ${PythonVersion.toString(this.defaultPythonVersion)}`);
+        if (this.defaultPythonVersion === undefined) {
+            // scriptc-native cannot spawn an interpreter (child_process is
+            // unfenced), so the query always comes back undefined. Apply the
+            // same fallback the ExecutionEnvironment ctor documents ("always
+            // default to the latest stable version") — under Node this yields
+            // the identical effective version, just set one step earlier.
+            this.defaultPythonVersion = latestStablePythonVersion;
+        } else {
+            console.info(`Assuming Python version ${PythonVersion.toMajorMinorString(this.defaultPythonVersion)}`);
         }
 
         for (const log of importLogger.getLogs()) {

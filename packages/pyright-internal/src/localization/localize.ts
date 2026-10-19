@@ -7,23 +7,10 @@
  * Code that localizes user-visible strings.
  */
 
-import { fail } from '../common/debug';
+import * as fs from 'fs';
 
-import * as csStrings from './package.nls.cs.json';
-import * as deStrings from './package.nls.de.json';
-import * as enUsStrings from './package.nls.en-us.json';
-import * as esStrings from './package.nls.es.json';
-import * as frStrings from './package.nls.fr.json';
-import * as itStrings from './package.nls.it.json';
-import * as jaStrings from './package.nls.ja.json';
-import * as koStrings from './package.nls.ko.json';
-import * as plStrings from './package.nls.pl.json';
-import * as ptBrStrings from './package.nls.pt-br.json';
-import * as qpsPlocStrings from './package.nls.qps-ploc.json';
-import * as ruStrings from './package.nls.ru.json';
-import * as trStrings from './package.nls.tr.json';
-import * as zhCnStrings from './package.nls.zh-cn.json';
-import * as zhTwStrings from './package.nls.zh-tw.json';
+import { fail } from '../common/debug';
+import { getScriptcRootDirectory } from '../common/scriptcRoot';
 
 export class ParameterizedString<T extends {}> {
     constructor(private _formatString: string) {}
@@ -42,31 +29,48 @@ export class ParameterizedString<T extends {}> {
 }
 
 const defaultLocale = 'en-us';
-const stringMapsByLocale: Map<string, StringLookupMap> = new Map([
-    ['cs', csStrings as StringLookupMap],
-    ['de', deStrings],
-    ['en-us', enUsStrings],
-    ['en', enUsStrings],
-    ['es', esStrings],
-    ['fr', frStrings],
-    ['it', itStrings],
-    ['ja', jaStrings],
-    ['ko', koStrings],
-    ['pl', plStrings],
-    ['pt-br', ptBrStrings],
-    ['qps-ploc', qpsPlocStrings],
-    ['ru', ruStrings],
-    ['tr', trStrings],
-    ['zh-cn', zhCnStrings],
-    ['zh-tw', zhTwStrings],
-]);
+// scriptc: the ~2MB of locale string tables are not compiled into the
+// bundle. Each locale is read lazily from `nls/package.nls.<locale>.json`
+// beside the bundle or native binary (the bundler copies the files there),
+// falling back to the JSONs next to this module when running unbundled
+// (jest). The `any` registry keeps every locale opaque until
+// getRawStringFromMap walks it dynamically — a typed registry would
+// collapse mixed string/{message,comment} fields at the dyn boundary.
+const localeStringsCache: { [key: string]: any } = {};
 
-type CommentedStringValue = {
-    message: string;
-    comment: string[];
-};
+function loadLocaleStrings(locale: string): any {
+    const cached = localeStringsCache[locale];
+    if (cached !== undefined) {
+        return cached;
+    }
 
-export type StringLookupMap = { [key: string]: string | CommentedStringValue | StringLookupMap };
+    // 'en' aliases 'en-us' (upstream's locale map keyed both).
+    const fileName = `package.nls.${locale === 'en' ? defaultLocale : locale}.json`;
+    const root: string | undefined = (global as any).__rootDirectory || getScriptcRootDirectory();
+    const candidates = [root && `${root}/nls`, `${__dirname}/nls`, __dirname];
+
+    let strings: any;
+    for (const dir of candidates) {
+        if (!dir) {
+            continue;
+        }
+        try {
+            strings = JSON.parse(fs.readFileSync(`${dir}/${fileName}`, 'utf8'));
+            break;
+        } catch {
+            // Try the next candidate directory.
+        }
+    }
+
+    localeStringsCache[locale] = strings;
+    return strings;
+}
+
+// scriptc: unions of record types collapse to a single arm at dynamic
+// boundaries, so `string | { message, comment } | StringLookupMap` coerces
+// every entry to `string` and {message, comment} values throw. `any`
+// keeps the dynamic shape intact (values are narrowed in getRawStringFromMap).
+export type StringLookupMap = { [key: string]: any };
 let localizedStrings: StringLookupMap | undefined = undefined;
 let defaultStrings: StringLookupMap = {};
 
@@ -117,7 +121,7 @@ export function getRawStringFromMap(map: StringLookupMap, keyParts: string[]): s
 function initialize(): StringLookupMap {
     defaultStrings = loadDefaultStrings();
     const currentLocale = getLocaleFromEnv();
-    return loadStringsForLocale(currentLocale, stringMapsByLocale);
+    return loadStringsForLocale(currentLocale, {});
 }
 
 let localeOverride: string | undefined;
@@ -173,7 +177,7 @@ export function getLocaleFromEnv(): string {
 }
 
 function loadDefaultStrings(): StringLookupMap {
-    const defaultStrings = stringMapsByLocale.get(defaultLocale);
+    const defaultStrings = loadLocaleStrings(defaultLocale);
     if (defaultStrings) {
         return defaultStrings;
     }
@@ -181,13 +185,15 @@ function loadDefaultStrings(): StringLookupMap {
     return {};
 }
 
-export function loadStringsForLocale(locale: string, localeMap: Map<string, StringLookupMap>): StringLookupMap {
+export function loadStringsForLocale(locale: string, localeMap: { [key: string]: any }): StringLookupMap {
     if (locale === defaultLocale) {
         // No need to load override if we're using the default.
         return {};
     }
 
-    let override = localeMap.get(locale);
+    // scriptc: the localeMap parameter is ignored — locales resolve through
+    // loadLocaleStrings (lazy nls/*.json reads).
+    let override = loadLocaleStrings(locale);
     if (override !== undefined) {
         return override;
     }
@@ -196,7 +202,7 @@ export function loadStringsForLocale(locale: string, localeMap: Map<string, Stri
     // general version.
     const localeSplit = locale.split('-');
     if (localeSplit.length > 0 && localeSplit[0]) {
-        override = localeMap.get(localeSplit[0]);
+        override = loadLocaleStrings(localeSplit[0]);
         if (override !== undefined) {
             return override;
         }

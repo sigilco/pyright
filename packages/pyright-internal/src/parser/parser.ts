@@ -3195,7 +3195,7 @@ export class Parser {
             // Swallow invalid tokens to make sure we make forward progress.
             if (this._peekTokenType() === TokenType.Invalid) {
                 const invalidToken = this._getNextToken();
-                const text = this._fileContents!.substr(invalidToken.start, invalidToken.length);
+                const text = this._fileContents!.slice(invalidToken.start, invalidToken.start + invalidToken.length);
 
                 const firstCharCode = text.charCodeAt(0);
 
@@ -4108,7 +4108,12 @@ export class Parser {
     // sliceop: ':' [test]
     private _parsePossibleSlice(): ExpressionNode {
         const firstToken = this._peekToken();
-        const sliceExpressions: (ExpressionNode | undefined)[] = [undefined, undefined, undefined];
+        // scriptc: storing into an `(ExpressionNode | undefined)[]` element
+        // throws 'expected null | undefined at $, got object' (the union's
+        // object arms have no unambiguous layout mapping, so only
+        // null/undefined remain assignable). A sparse `ExpressionNode[]`
+        // reads back `undefined` for unset indices identically.
+        const sliceExpressions: ExpressionNode[] = [];
         let sliceIndex = 0;
         let sawColon = false;
 
@@ -5597,7 +5602,7 @@ export class Parser {
         if (nextToken.type === TokenType.Keyword) {
             const keywordToken = nextToken as KeywordToken;
             if (KeywordToken.isSoftKeyword(keywordToken)) {
-                const keywordText = this._fileContents!.substr(nextToken.start, nextToken.length);
+                const keywordText = this._fileContents!.slice(nextToken.start, nextToken.start + nextToken.length);
                 this._getNextToken();
                 return IdentifierToken.create(nextToken.start, nextToken.length, keywordText, nextToken.comments);
             }

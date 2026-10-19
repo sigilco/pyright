@@ -8,6 +8,7 @@
 
 import { some } from '../collectionUtils';
 import { getRootLength, getShortenedFileName } from '../pathUtils';
+import type { FilePath } from '../filePath';
 import type { Uri } from './uriInterface';
 
 export type JsonObjType = any;
@@ -145,7 +146,7 @@ export abstract class BaseUri implements Uri {
         return this.key === other?.key;
     }
 
-    abstract startsWith(other: Uri | undefined, ignoreCase?: boolean): boolean;
+    abstract startsWithUri(other: Uri | undefined, ignoreCase?: boolean): boolean;
 
     pathStartsWith(name: string): boolean {
         // We're making an assumption here that the name is already normalized.
@@ -197,7 +198,7 @@ export abstract class BaseUri implements Uri {
 
     abstract getPath(): string;
 
-    abstract getFilePath(): string;
+    abstract getFilePath(): FilePath;
 
     getRelativePathComponents(to: Uri): readonly string[] {
         const fromComponents = this.getPathComponents();

@@ -83,7 +83,7 @@ export class ProcessTreeTerminationError extends Error {
     constructor(child: child_process.ChildProcess, error: unknown) {
         super(
             `Owned process-tree cleanup is incomplete for PID ${child.pid}: ${
-                error instanceof Error ? error.message : String(error)
+                (error as Error)?.message ?? String(error)
             }`
         );
         this.name = 'ProcessTreeTerminationError';

@@ -47,7 +47,7 @@ export class ParentDirectoryCache {
     }
 
     checkValidPath(fs: FileSystem, sourceFileUri: Uri, root: Uri): boolean {
-        if (!sourceFileUri.startsWith(root)) {
+        if (!sourceFileUri.startsWithUri(root)) {
             // We don't search containing folders for libs.
             return false;
         }
@@ -57,9 +57,9 @@ export class ParentDirectoryCache {
             this._importRootGetter()
                 .map((r) => fs.realCasePath(r))
                 .filter((r) => !r.equals(root))
-                .filter((r) => r.startsWith(root));
+                .filter((r) => r.startsWithUri(root));
 
-        if (this._libPathCache.some((p) => sourceFileUri.startsWith(p))) {
+        if (this._libPathCache.some((p) => sourceFileUri.startsWithUri(p))) {
             // Make sure it is not lib folders under user code root.
             // ex) .venv folder
             return false;

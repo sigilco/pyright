@@ -94,7 +94,8 @@ export class SourceMapper {
     }
 
     getModuleNode(fileUri: Uri): ModuleNode | undefined {
-        return this._boundSourceGetter(fileUri)?.sourceFile.getParserOutput()?.parseTree;
+        const boundFile = this._boundSourceGetter(fileUri);
+        return boundFile ? boundFile.sourceFile.getParserOutput()?.parseTree : undefined;
     }
 
     findDeclarations(stubDecl: Declaration): Declaration[] {

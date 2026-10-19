@@ -28,6 +28,7 @@ export type SerializedType = [UriKinds, ...any[]];
 
 // Re-export Uri interface from uriInterface.ts to maintain backward compatibility
 // Use interface merging instead of direct export to avoid conflict with Uri namespace
+import type { FilePath } from '../filePath';
 import type { Uri as UriInterface } from './uriInterface';
 export interface Uri extends UriInterface {}
 
@@ -35,7 +36,7 @@ const _dosPathRegex = /^\/[a-zA-Z]:\//;
 const _win32NormalizationRegex = /\//g;
 
 // Returns just the fsPath path portion of a vscode URI.
-function getFilePath(uri: URI): string {
+function getFilePath(uri: URI): FilePath {
     let filePath: string | undefined;
 
     // Compute the file path ourselves. The vscode.URI class doesn't
@@ -60,7 +61,7 @@ function getFilePath(uri: URI): string {
         filePath = filePath.replace(_win32NormalizationRegex, '\\');
     }
 
-    return filePath;
+    return filePath as FilePath;
 }
 
 // Function called to normalize input URIs. This gets rid of '..' and '.' in the path.

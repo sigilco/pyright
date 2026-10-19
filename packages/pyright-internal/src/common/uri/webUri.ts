@@ -11,6 +11,7 @@
  * - vscode-vfs://github.com/microsoft/debugpy/debugpy/launcher/debugAdapter.py
  */
 
+import type { FilePath } from '../filePath';
 import { URI } from 'vscode-uri';
 import { getRootLength, hasTrailingDirectorySeparator, resolvePaths } from '../pathUtils';
 import { BaseUri, JsonObjType } from './baseUri';
@@ -143,14 +144,14 @@ export class WebUri extends BaseUri {
             return false;
         }
 
-        return parent._path.length < this._path.length && this.startsWith(parent);
+        return parent._path.length < this._path.length && this.startsWithUri(parent);
     }
 
     override isLocal(): boolean {
         return false;
     }
 
-    override startsWith(other: Uri | undefined): boolean {
+    override startsWithUri(other: Uri | undefined): boolean {
         if (other?.scheme !== this.scheme) {
             return false;
         }
@@ -175,8 +176,8 @@ export class WebUri extends BaseUri {
         return this._path;
     }
 
-    override getFilePath(): string {
-        return ''; // Web URIs don't have file paths so this is always empty.
+    override getFilePath(): FilePath {
+        return '' as FilePath; // Web URIs don't have file paths so this is always empty.
     }
 
     override resolvePaths(...paths: string[]): Uri {

@@ -1381,7 +1381,7 @@ export class CompletionProvider {
                 curOffset--;
 
                 // Stop scanning backward if we hit certain stop characters.
-                const curChar = this._fileContents.substr(curOffset, 1);
+                const curChar = this._fileContents.slice(curOffset, curOffset + 1);
                 if (curChar === '(' || curChar === '\n' || curChar === '}') {
                     break;
                 }
@@ -1430,11 +1430,11 @@ export class CompletionProvider {
 
         // Get the text on that line prior to the insertion point.
         const lineTextRange = this.parseResults.tokenizerOutput.lines.getItemAt(this.position.line);
-        const textOnLine = this._fileContents.substr(lineTextRange.start, lineTextRange.length);
-        const priorText = textOnLine.substr(0, this.position.character);
-        const postText = textOnLine.substr(this.position.character);
+        const textOnLine = this._fileContents.slice(lineTextRange.start, lineTextRange.start + lineTextRange.length);
+        const priorText = textOnLine.slice(0, this.position.character);
+        const postText = textOnLine.slice(this.position.character);
         const priorWordIndex = priorText.search(/[\p{L}\p{N}\p{Pc}\p{Mn}\p{Mc}]+$/u);
-        const priorWord = priorWordIndex >= 0 ? priorText.substr(priorWordIndex) : '';
+        const priorWord = priorWordIndex >= 0 ? priorText.slice(priorWordIndex) : '';
 
         // Don't offer completions if we're within a comment.
         if (this._isWithinComment(offset)) {
@@ -2575,7 +2575,7 @@ export class CompletionProvider {
                 });
             } else {
                 this._addStringLiteralToCompletions(
-                    value.substr(prefix.length + 1, value.length - prefix.length - 2),
+                    value.slice(prefix.length + 1, value.length - 1),
                     quoteValue,
                     postText,
                     completionMap,
@@ -2752,7 +2752,7 @@ export class CompletionProvider {
                     for (const entry of dictionary.d.items.filter(
                         (e) => e.nodeType === ParseNodeType.DictionaryKeyEntry
                     ) as DictionaryKeyEntryNode[]) {
-                        const key = this.parseResults.text.substr(entry.d.keyExpr.start, entry.d.keyExpr.length).trim();
+                        const key = this.parseResults.text.slice(entry.d.keyExpr.start, entry.d.keyExpr.start + entry.d.keyExpr.length).trim();
                         if (key.length > 0) keys.add(key);
                     }
                 }
@@ -2782,7 +2782,7 @@ export class CompletionProvider {
             ) {
                 const indexArgument = node.parent.d.items[0];
                 const key = this.parseResults.text
-                    .substr(indexArgument.d.valueExpr.start, indexArgument.d.valueExpr.length)
+                    .slice(indexArgument.d.valueExpr.start, indexArgument.d.valueExpr.start + indexArgument.d.valueExpr.length)
                     .trim();
                 if (key.length > 0) keys.add(key);
             }
@@ -2950,7 +2950,7 @@ export class CompletionProvider {
                     // Bytes keys carry a `b`/`B` prefix; strip it (and the quotes) and
                     // re-wrap using the key's own quote so raw/embedded quotes stay valid.
                     const prefix = isBytesLiteral ? key[0] : '';
-                    const keyWithoutQuote = key.substr(prefix.length + 1, key.length - prefix.length - 2);
+                    const keyWithoutQuote = key.slice(prefix.length + 1, key.length - prefix.length - 2);
 
                     this._addStringLiteralToCompletions(
                         keyWithoutQuote,
@@ -3474,10 +3474,10 @@ export class CompletionProvider {
             const lastDoubleQuote = priorText.lastIndexOf(doubleQuote);
 
             if (lastSingleQuote > lastDoubleQuote) {
-                stringValue = priorText.substr(lastSingleQuote + 1);
+                stringValue = priorText.slice(lastSingleQuote + 1);
                 quoteCharacter = singleQuote;
             } else if (lastDoubleQuote > lastSingleQuote) {
-                stringValue = priorText.substr(lastDoubleQuote + 1);
+                stringValue = priorText.slice(lastDoubleQuote + 1);
                 quoteCharacter = doubleQuote;
             }
         }

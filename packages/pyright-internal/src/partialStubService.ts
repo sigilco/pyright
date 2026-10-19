@@ -103,7 +103,7 @@ export class PartialStubService implements SupportPartialStubs {
                 this._partialStubPackagePaths.add(partialStubPackagePath.key);
 
                 // Search the root to see whether we have matching package installed.
-                const packageName = entry.name.substr(0, entry.name.length - stubsSuffix.length);
+                const packageName = entry.name.slice(0, entry.name.length - stubsSuffix.length);
                 for (const root of roots) {
                     const packagePath = root.combinePaths(packageName);
                     try {

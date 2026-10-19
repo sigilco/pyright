@@ -32,6 +32,9 @@ export type OverloadResultProjection =
     | { kind: 'blocked'; reason: 'depth' | 'nodes' | 'cycle' | 'category'; visitedNodes: number };
 
 class ProjectionBlocked extends Error {
+    // scriptc: instanceof on builtin-extending classes hits SC1090,
+    // so the catch below checks this flag instead.
+    readonly isProjectionBlocked = true;
     constructor(readonly reason: 'depth' | 'nodes' | 'cycle' | 'category') {
         super(`Overload-result baseline projection blocked: ${reason}`);
     }
@@ -282,7 +285,7 @@ export function projectOverloadResultBaseline(
     try {
         return { kind: 'projected', type: project(type, 0), visitedNodes };
     } catch (error) {
-        if (error instanceof ProjectionBlocked) {
+        if ((error as ProjectionBlocked)?.isProjectionBlocked) {
             return { kind: 'blocked', reason: error.reason, visitedNodes };
         }
         throw error;

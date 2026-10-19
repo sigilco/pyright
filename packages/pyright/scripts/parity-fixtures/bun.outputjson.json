@@ -1,0 +1,45 @@
+{
+  "version": 0,
+  "time": 0,
+  "generalDiagnostics": [
+    {
+      "file": "<SAMPLE>/err.py",
+      "severity": "error",
+      "message": "Argument of type \"Literal['not an int']\" cannot be assigned to parameter \"x\" of type \"int\" in function \"takes_int\"\n  \"Literal['not an int']\" is not assignable to \"int\"",
+      "range": {
+        "start": {
+          "line": 7,
+          "character": 10
+        },
+        "end": {
+          "line": 7,
+          "character": 22
+        }
+      },
+      "rule": "reportArgumentType"
+    },
+    {
+      "file": "<SAMPLE>/err.py",
+      "severity": "error",
+      "message": "Type \"Literal['also not an int']\" is not assignable to declared type \"int\"\n  \"Literal['also not an int']\" is not assignable to \"int\"",
+      "range": {
+        "start": {
+          "line": 9,
+          "character": 11
+        },
+        "end": {
+          "line": 9,
+          "character": 28
+        }
+      },
+      "rule": "reportAssignmentType"
+    }
+  ],
+  "summary": {
+    "filesAnalyzed": 2,
+    "errorCount": 2,
+    "warningCount": 0,
+    "informationCount": 0,
+    "timeInSec": 0
+  }
+}

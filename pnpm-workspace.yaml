@@ -20,3 +20,10 @@ overrides:
   nx: '22.7.8'
   '@nx/devkit': '22.7.8'
   ip-address: '10.4.0'
+
+patchedDependencies:
+  '@yarnpkg/fslib@2.10.4': patches/@yarnpkg__fslib@2.10.4.patch
+  '@yarnpkg/libzip@2.3.0': patches/@yarnpkg__libzip@2.3.0.patch
+  smol-toml@1.8.0: patches/smol-toml@1.8.0.patch
+  source-map-support@0.5.21: patches/source-map-support@0.5.21.patch
+  vscode-jsonrpc@9.0.1: patches/vscode-jsonrpc@9.0.1.patch

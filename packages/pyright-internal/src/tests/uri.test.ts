@@ -404,17 +404,17 @@ test('equals', () => {
 test('startsWith', () => {
     const parent = Uri.parse('file:///a/b/?query#fragment', caseDetector);
     const child = Uri.parse('file:///a/b/c.pyi?query#fragment', caseDetector);
-    assert.ok(child.startsWith(parent));
+    assert.ok(child.startsWithUri(parent));
     const parent2 = Uri.parse('file:///a/b', caseDetector);
     const child2 = Uri.parse('file:///a/b/c.pyi', caseDetector);
-    assert.ok(child2.startsWith(parent2));
+    assert.ok(child2.startsWithUri(parent2));
     const parent3 = Uri.parse('file:///a/b/', caseDetector);
     const child3 = Uri.parse('file:///a/b/c.pyi', caseDetector);
-    assert.ok(child3.startsWith(parent3));
+    assert.ok(child3.startsWithUri(parent3));
     const parent4 = Uri.parse('file:///a/b/', caseDetector);
     const notChild4 = Uri.parse('file:///a/bb/c.pyi', caseDetector);
-    assert.ok(!notChild4.startsWith(parent4));
-    assert.ok(!notChild4.startsWith(parent2));
+    assert.ok(!notChild4.startsWithUri(parent4));
+    assert.ok(!notChild4.startsWithUri(parent2));
 });
 
 test('path comparisons', () => {

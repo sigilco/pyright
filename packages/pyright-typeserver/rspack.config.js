@@ -5,6 +5,7 @@ const { monorepoResourceNameMapper, tsconfigResolveAliases } = require('../../bu
 const rspack = createRequire(__filename)('@rspack/core');
 const outPath = path.resolve(__dirname, 'dist');
 const typeshedFallback = path.resolve(__dirname, '..', 'pyright-internal', 'typeshed-fallback');
+const nlsJson = path.resolve(__dirname, '..', 'pyright-internal', 'src', 'localization');
 
 /** @type {(env: any, argv: { mode: 'production' | 'development' | 'none' }) => any} */
 module.exports = (_, { mode }) => {
@@ -55,7 +56,15 @@ module.exports = (_, { mode }) => {
                 },
             ],
         },
-        plugins: [new rspack.CopyRspackPlugin({ patterns: [{ from: typeshedFallback, to: 'typeshed-fallback' }] })],
+        plugins: [
+            new rspack.CopyRspackPlugin({
+                patterns: [
+                    { from: typeshedFallback, to: 'typeshed-fallback' },
+                    // localize.ts lazy-loads nls JSONs at runtime instead of bundling them.
+                    { from: nlsJson, to: 'nls', filter: (filepath) => /package\.nls\..+\.json$/.test(filepath) },
+                ],
+            }),
+        ],
         optimization: {
             splitChunks: {
                 cacheGroups: {

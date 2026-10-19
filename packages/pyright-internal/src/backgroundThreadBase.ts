@@ -127,14 +127,16 @@ export function serializeReplacer(value: any) {
     if (Uri.is(value) && value.toJsonObj !== undefined) {
         return { __serialized_uri_val: value.toJsonObj() };
     }
-    if (value instanceof Map) {
-        return { __serialized_map_val: [...value] };
+    // scriptc: `instanceof <builtin>` is unlowered (SC1090) — duck-type via
+    // characteristic members instead (worker-serialization path only).
+    if (typeof (value as Map<unknown, unknown>)?.entries === 'function' && typeof (value as Map<unknown, unknown>)?.has === 'function') {
+        return { __serialized_map_val: [...(value as Map<unknown, unknown>)] };
     }
-    if (value instanceof Set) {
-        return { __serialized_set_val: [...value] };
+    if (typeof (value as Set<unknown>)?.values === 'function' && typeof (value as Set<unknown>)?.has === 'function') {
+        return { __serialized_set_val: [...(value as Set<unknown>)] };
     }
-    if (value instanceof RegExp) {
-        return { __serialized_regexp_val: { source: value.source, flags: value.flags } };
+    if (typeof (value as RegExp)?.test === 'function' && typeof (value as RegExp)?.source === 'string') {
+        return { __serialized_regexp_val: { source: (value as RegExp).source, flags: (value as RegExp).flags } };
     }
     if (value instanceof ConfigOptions) {
         const entries = Object.entries(value);

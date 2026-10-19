@@ -75,7 +75,7 @@ export class TextEditTracker {
     addEditWithTextRange(parseFileResults: ParseFileResults, range: TextRange, replacementText: string) {
         const filePath = getFileInfo(parseFileResults.parserOutput.parseTree, this._nodeInfo).fileUri;
 
-        const existing = parseFileResults.text.substr(range.start, range.length);
+        const existing = parseFileResults.text.slice(range.start, range.start + range.length);
         if (existing === replacementText) {
             // No change. Return as it is.
             return;

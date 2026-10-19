@@ -2757,7 +2757,8 @@ export function createTypeEvaluator(
                 effectiveFlags |= MemberAccessFlags.DisallowClassVarWrites;
             }
 
-            subDiag = diag ? new DiagnosticAddendum() : undefined;
+            // scriptc: union-slot store of a class instance traps; keep undefined.
+            subDiag = undefined;
 
             // See if the member is present in the object itself.
             memberInfo = getTypeOfClassMemberName(
@@ -15497,9 +15498,10 @@ export function createTypeEvaluator(
             expectedType = matchingSubtype;
         }
 
-        let expectedTypeDiagAddendum = undefined;
+        // scriptc: storing a class instance into a `T | undefined` slot traps (SC2003
+        // union-layout); keep the addendum undefined — only error detail is lost.
+        const expectedTypeDiagAddendum = undefined;
         if (expectedType) {
-            expectedTypeDiagAddendum = new DiagnosticAddendum();
             const result = getTypeOfDictionaryWithContext(
                 node,
                 flags,
@@ -20161,7 +20163,7 @@ export function createTypeEvaluator(
         const typeParamScope = nodeInfo.getScope(node);
 
         node.d.params.forEach((param) => {
-            const paramSymbol = typeParamScope?.symbolTable.get(param.d.name.d.value);
+            const paramSymbol = typeParamScope ? typeParamScope.symbolTable.get(param.d.name.d.value) : undefined;
             if (!paramSymbol) {
                 // This can happen if the code is unreachable.
                 return;
@@ -23665,7 +23667,8 @@ export function createTypeEvaluator(
                     const usageScope = nodeInfo.getScope(usageScopeNode);
                     if (usageScope?.proxy) {
                         const typeParamScope = nodeInfo.getScope(usageScopeNode);
-                        if (!typeParamScope?.symbolTable.has(name) && usageScopeNode.parent) {
+                        // scriptc: `x?.y.m()` on undefined x still evaluates .m
+                        if (!(typeParamScope && typeParamScope.symbolTable.has(name)) && usageScopeNode.parent) {
                             usageScopeNode = ParseTreeUtils.getExecutionScopeNode(usageScopeNode.parent, nodeInfo);
                         }
                     }
@@ -24041,7 +24044,10 @@ export function createTypeEvaluator(
                 // is a valid entry in the TypedDict to avoid resolving declarations for
                 // synthesized symbols such as 'get'.
                 if (isClassInstance(subtype) && ClassType.isTypedDictClass(subtype)) {
-                    const entry = subtype.shared.typedDictEntries?.knownItems.get(node.d.value);
+                    const entry =
+                        subtype.shared.typedDictEntries !== undefined
+                            ? subtype.shared.typedDictEntries.knownItems.get(node.d.value)
+                            : undefined;
                     if (entry) {
                         const symbol = lookUpObjectMember(subtype, node.d.value)?.symbol;
 

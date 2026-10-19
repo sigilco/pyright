@@ -6,6 +6,8 @@
  * URI interface definition (extracted to break circular dependency).
  */
 
+import type { FilePath } from '../filePath';
+
 export interface Uri {
     // Unique key for storing in maps.
     readonly key: string;
@@ -62,7 +64,7 @@ export interface Uri {
     isUntitled(): boolean;
     equals(other: Uri | undefined): boolean;
     // Returns true if the `other` is the parent of `this`. Meaning `other` is a prefix of `this`.
-    startsWith(other: Uri | undefined): boolean;
+    startsWithUri(other: Uri | undefined): boolean;
     pathStartsWith(name: string): boolean;
     pathEndsWith(name: string): boolean;
     pathIncludes(include: string): boolean;
@@ -86,7 +88,7 @@ export interface Uri {
     getRelativePath(child: Uri): string | undefined;
     getPathComponents(): readonly string[];
     getPath(): string;
-    getFilePath(): string;
+    getFilePath(): FilePath;
     getRelativePathComponents(to: Uri): readonly string[];
     getShortenedFileName(maxDirLength?: number): string;
     stripExtension(): Uri;

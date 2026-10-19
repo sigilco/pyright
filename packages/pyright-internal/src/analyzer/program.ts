@@ -214,7 +214,7 @@ export class Program {
         this._createNewEvaluator();
 
         this._id = id ?? `Prog_${Program._nextId}`;
-        Program._nextId += 1;
+        Program._nextId = Program._nextId + 1;
     }
 
     get id() {
@@ -720,7 +720,7 @@ export class Program {
 
     containsSourceFileIn(folder: Uri): boolean {
         for (const normalizedSourceFilePath of this._sourceFileMap.values()) {
-            if (normalizedSourceFilePath.uri.startsWith(folder)) {
+            if (normalizedSourceFilePath.uri.startsWithUri(folder)) {
                 return true;
             }
         }
@@ -749,7 +749,7 @@ export class Program {
     }
 
     getBoundSourceFile(uri: Uri): SourceFile | undefined {
-        return this.getBoundSourceFileInfo(uri)?.sourceFile;
+        const info = this.getBoundSourceFileInfo(uri)?.sourceFile;
     }
 
     getSourceFileInfoList(): readonly SourceFileInfo[] {
@@ -886,19 +886,21 @@ export class Program {
     }
 
     getParserOutput(fileUri: Uri): ParserOutput | undefined {
-        return this.getBoundSourceFileInfo(
+        const info = this.getBoundSourceFileInfo(
             fileUri,
             /* content */ undefined,
             /* force */ true
-        )?.sourceFile.getParserOutput();
+        );
+        return info ? info.sourceFile.getParserOutput() : undefined;
     }
 
     getParseResults(fileUri: Uri): ParseFileResults | undefined {
-        return this.getBoundSourceFileInfo(
+        const info = this.getBoundSourceFileInfo(
             fileUri,
             /* content */ undefined,
             /* force */ true
-        )?.sourceFile.getParseResults();
+        );
+        return info ? info.sourceFile.getParseResults() : undefined;
     }
 
     getParseDiagnostics(fileUri: Uri): Diagnostic[] | undefined {
@@ -906,7 +908,8 @@ export class Program {
             fileUri,
             /* content */ undefined,
             /* force */ true
-        )?.sourceFile.getParseDiagnostics();
+        );
+        return info ? info.sourceFile.getParseDiagnostics() : undefined;
     }
 
     handleMemoryHighUsage() {
@@ -1023,7 +1026,7 @@ export class Program {
                 return undefined;
             }
 
-            return fileContents.substr(textRange.start, textRange.length);
+            return fileContents.slice(textRange.start, textRange.start + textRange.length);
         });
     }
 
@@ -2502,7 +2505,7 @@ export class Program {
         const dependentFiles = [];
         for (let i = startIndex; i < chainedByList.length; i++) {
             const file = chainedByList[i];
-            const parseResults = file?.sourceFile.getParserOutput();
+            const parseResults = file ? file.sourceFile.getParserOutput() : undefined;
             if (!parseResults) {
                 continue;
             }

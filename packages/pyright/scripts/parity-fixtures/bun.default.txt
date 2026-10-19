@@ -1,0 +1,7 @@
+exit=1
+<SAMPLE>/err.py
+  <SAMPLE>/err.py:8:11 - error: Argument of type "Literal['not an int']" cannot be assigned to parameter "x" of type "int" in function "takes_int"
+    "Literal['not an int']" is not assignable to "int" (reportArgumentType)
+  <SAMPLE>/err.py:10:12 - error: Type "Literal['also not an int']" is not assignable to declared type "int"
+    "Literal['also not an int']" is not assignable to "int" (reportAssignmentType)
+2 errors, 0 warnings, 0 informations
