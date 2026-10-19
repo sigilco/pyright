@@ -10,6 +10,7 @@
 import * as fs from 'fs';
 
 import { fail } from '../common/debug';
+import { getScriptcRootDirectory } from '../common/scriptcRoot';
 
 export class ParameterizedString<T extends {}> {
     constructor(private _formatString: string) {}
@@ -45,7 +46,7 @@ function loadLocaleStrings(locale: string): any {
 
     // 'en' aliases 'en-us' (upstream's locale map keyed both).
     const fileName = `package.nls.${locale === 'en' ? defaultLocale : locale}.json`;
-    const root: string | undefined = (global as any).__rootDirectory;
+    const root: string | undefined = (global as any).__rootDirectory || getScriptcRootDirectory();
     const candidates = [root && `${root}/nls`, `${__dirname}/nls`, __dirname];
 
     let strings: any;

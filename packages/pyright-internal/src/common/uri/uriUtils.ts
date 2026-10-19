@@ -9,6 +9,7 @@
 import type { Dirent } from 'fs';
 
 import { CaseSensitivityDetector } from '../caseSensitivityDetector';
+import { getScriptcRootDirectory } from '../scriptcRoot';
 import { FileSystem, ReadOnlyFileSystem, Stats } from '../fileSystem';
 import {
     getRegexEscapedSeparator,
@@ -471,16 +472,12 @@ export function getRootUri(caseDetector: CaseSensitivityDetector): Uri | undefin
 // scriptc: assigning to `global` doesn't persist (`global.x = v; global.x` reads
 // back undefined), so __rootDirectory set by the CLI entry point never reaches
 // getModulePath(). Keep a module-level mirror the entry point can also set.
-let scriptcRootDirectory: string | undefined;
-
-export function setScriptcRootDirectory(dir: string) {
-    scriptcRootDirectory = dir;
-}
+export { setScriptcRootDirectory } from '../scriptcRoot';
 
 export function getRootUri(csdOrSp: CaseSensitivityDetector | ServiceProvider): Uri | undefined {
     csdOrSp = CaseSensitivityDetector.is(csdOrSp) ? csdOrSp : csdOrSp.get(ServiceKeys.caseSensitivityDetector);
 
-    const rootDirectory = (global as any).__rootDirectory || scriptcRootDirectory;
+    const rootDirectory = (global as any).__rootDirectory || getScriptcRootDirectory();
     if (rootDirectory) {
         return Uri.file(rootDirectory, csdOrSp);
     }
