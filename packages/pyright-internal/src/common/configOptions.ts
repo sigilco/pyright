@@ -1591,7 +1591,14 @@ export class ConfigOptions {
 
         const importLogger = new ImportLogger();
         this.defaultPythonVersion = host.getPythonVersion(this.pythonPath, importLogger);
-        if (this.defaultPythonVersion !== undefined) {
+        if (this.defaultPythonVersion === undefined) {
+            // scriptc-native cannot spawn an interpreter (child_process is
+            // unfenced), so the query always comes back undefined. Apply the
+            // same fallback the ExecutionEnvironment ctor documents ("always
+            // default to the latest stable version") — under Node this yields
+            // the identical effective version, just set one step earlier.
+            this.defaultPythonVersion = latestStablePythonVersion;
+        } else {
             console.info(`Assuming Python version ${PythonVersion.toString(this.defaultPythonVersion)}`);
         }
 

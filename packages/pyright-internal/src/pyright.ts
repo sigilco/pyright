@@ -971,7 +971,7 @@ function verifyPackageTypes(
         const jsonReport = buildTypeCompletenessReport(packageName, report, minSeverityLevel);
 
         if (outputJson) {
-            console.info(JSON.stringify(jsonReport, /* replacer */ undefined, 4));
+            console.info(JSON.stringify(jsonReport, /* replacer */ null, 4));
         } else {
             printTypeCompletenessReportText(jsonReport, !!options.configSettings.verboseOutput);
         }
@@ -1325,7 +1325,7 @@ function reportFactsAsJson(
         }
     });
 
-    console.info(JSON.stringify(report, /* replacer */ undefined, 4));
+    console.info(JSON.stringify(report, /* replacer */ null, 4));
     console.info('');
 
     return {
@@ -1372,7 +1372,7 @@ function reportDiagnosticsAsJson(
         });
     });
 
-    console.info(JSON.stringify(report, /* replacer */ undefined, 4));
+    console.info(JSON.stringify(report, /* replacer */ null, 4));
 
     // Output a blank line to help tools that are attempting to parse the
     // JSON output when used in watch mode.
