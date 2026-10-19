@@ -4108,7 +4108,12 @@ export class Parser {
     // sliceop: ':' [test]
     private _parsePossibleSlice(): ExpressionNode {
         const firstToken = this._peekToken();
-        const sliceExpressions: (ExpressionNode | undefined)[] = [undefined, undefined, undefined];
+        // scriptc: storing into an `(ExpressionNode | undefined)[]` element
+        // throws 'expected null | undefined at $, got object' (the union's
+        // object arms have no unambiguous layout mapping, so only
+        // null/undefined remain assignable). A sparse `ExpressionNode[]`
+        // reads back `undefined` for unset indices identically.
+        const sliceExpressions: ExpressionNode[] = [];
         let sliceIndex = 0;
         let sawColon = false;
 
