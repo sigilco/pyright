@@ -222,6 +222,7 @@ export function getFileSystemEntriesWithSymlinkedDirectories(
     try {
         return getFileSystemEntriesWithSymlinkedDirectoriesFromDirEntries(fs.readdirEntriesSync(uri), fs, uri);
     } catch (e: any) {
+        console.error(`getFileSystemEntries threw: ${(e as Error)?.message ?? String(e)}`);
         return { files: [], directories: [], symlinkedDirectories: [] };
     }
 }
